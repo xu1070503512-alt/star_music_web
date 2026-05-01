@@ -1,0 +1,14 @@
+.scroll-float {
+  overflow: hidden;
+  display: block;
+  line-height: 1.3;
+}
+
+.scroll-float .char {
+  --char-progress: clamp(0, (var(--scroll-progress, 0) - var(--char-index, 0) * var(--char-stagger, 0.03)) / 0.35, 1);
+  display: inline-block;
+  will-change: transform, opacity;
+  transform-origin: 50% 0%;
+  opacity: var(--char-progress);
+  transform: translateY(calc(120% * (1 - var(--char-progress)))) scaleY(calc(1 + 1.3 * (1 - var(--char-progress)))) scaleX(calc(1 - 0.3 * (1 - var(--char-progress))));
+}

@@ -1,0 +1,52 @@
+.blur-text {
+  display: inline-block;
+  will-change: transform, filter, opacity;
+}
+
+.blur-text.word {
+  white-space: pre-wrap;
+}
+
+.blur-text.animate {
+  animation: blurReveal var(--blur-duration, 0.6s) var(--blur-delay, 0s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.blur-text.animate-top {
+  animation: blurRevealTop var(--blur-duration, 0.6s) var(--blur-delay, 0s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes blurReveal {
+  0% {
+    filter: blur(10px);
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  50% {
+    filter: blur(5px);
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blurRevealTop {
+  0% {
+    filter: blur(10px);
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  50% {
+    filter: blur(5px);
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

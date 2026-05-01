@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="/css/blur-text.css">
+  <link rel="stylesheet" href="/css/gradual-blur.css">
+</head>
+<body class="auth-page page-shell">
+  <div class="noise-layer"></div>
+  <div class="auth-orb auth-orb-a"></div>
+  <div class="auth-orb auth-orb-b"></div>
+  <main class="auth-layout center-shell">
+    <section class="auth-aside">
+      <span class="eyebrow" data-blur-text="chars">WELCOME BACK</span>
+      <h1 data-blur-text="words">把灵感、节奏和夜色，一起接回你的播放现场。</h1>
+      <p data-blur-text="words">登录后继续访问沉浸式首页、播放器、个人空间与管理能力。</p>
+      <div class="auth-badges">
+        <span>玻璃拟态</span>
+        <span>移动端适配</span>
+        <span>原生交互</span>
+      </div>
+    </section>
+    <section class="panel-card form-card auth-card deluxe-card">
+      <h2 class="form-title brand-title">小星音吧</h2>
+      <p class="form-subtitle">请登录后继续探索独立音乐宇宙</p>
+      <form action="/api/login" method="POST" class="form-stack">
+        <div class="field-group">
+          <label class="field-label" for="login-username">账号</label>
+          <input id="login-username" class="field-input" type="text" name="username" placeholder="请输入账号" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="login-password">密码</label>
+          <input id="login-password" class="field-input" type="password" name="password" placeholder="请输入密码" required>
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit btn-glow">登录进入</button>
+      </form>
+      <div class="link-stack">
+        <a href="/register">没有账号？立即注册</a>
+        <a href="/">返回欢迎页</a>
+      </div>
+    </section>
+  </main>
+  <script src="/js/gradual-blur.js"></script>
+  <script src="/js/blur-text.js"></script>
+</body>
+</html>

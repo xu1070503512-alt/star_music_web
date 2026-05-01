@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/welcome.css">
+  <link rel="stylesheet" href="/css/card-nav.css">
+  <link rel="stylesheet" href="/css/blur-text.css">
+  <link rel="stylesheet" href="/css/scroll-float.css">
+  <link rel="stylesheet" href="/css/count-up.css">
+  <link rel="stylesheet" href="/css/circular-gallery.css">
+  <link rel="stylesheet" href="/css/logo-loop.css">
+  <link rel="stylesheet" href="/css/gradual-blur.css">
+</head>
+<body class="page-shell welcome-page-body">
+  <div class="noise-layer"></div>
+  <div class="aurora aurora-left"></div>
+  <div class="aurora aurora-right"></div>
+  <div id="hero-canvas-container"></div>
+
+  <div class="card-nav-container">
+    <nav class="card-nav" aria-label="主导航">
+      <div class="card-nav-top">
+        <div class="hamburger-menu" role="button" aria-label="展开菜单" tabindex="0">
+          <div class="hamburger-line"></div>
+          <div class="hamburger-line"></div>
+        </div>
+        <a class="card-nav-logo" href="/home" aria-label="小星音吧首页">✦</a>
+        <button class="card-nav-cta" id="nav-btn-register">加入社区</button>
+      </div>
+      <div class="card-nav-content" aria-hidden="true">
+        <div class="nav-card">
+          <div class="nav-card-label">音乐</div>
+          <div class="nav-card-links">
+            <a class="nav-card-link" href="/home">🏠 首页</a>
+            <a class="nav-card-link" href="#">🔍 探索发现</a>
+            <a class="nav-card-link" href="#">🔥 热门新声</a>
+          </div>
+        </div>
+        <div class="nav-card">
+          <div class="nav-card-label">社区</div>
+          <div class="nav-card-links">
+            <a class="nav-card-link" href="#" id="nav-card-login">🎵 登录</a>
+            <a class="nav-card-link" href="#" id="nav-card-register">✨ 注册账号</a>
+          </div>
+        </div>
+        <div class="nav-card">
+          <div class="nav-card-label">关于</div>
+          <div class="nav-card-links">
+            <a class="nav-card-link" href="#">📖 关于小星音吧</a>
+            <a class="nav-card-link" href="#">💬 反馈建议</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <main class="welcome-page">
+    <section class="welcome-hero">
+      <div class="welcome-copy">
+        <span class="eyebrow" data-blur-text="chars">IMMERSIVE INDIE SOUND HUB</span>
+        <h1 class="welcome-title" data-blur-text="words">让每一次进入，都像踏入一间正在发光的音乐自习室。</h1>
+        <p class="welcome-subtitle" data-blur-text="words">围绕小众音乐、独立创作者和沉浸式声场，重构你的播放、收藏、发现与表达体验。</p>
+        <div class="welcome-actions">
+          <button id="btn-login" class="btn btn-primary btn-glow">进入社区</button>
+          <button id="btn-register" class="btn btn-secondary">创建账号</button>
+        </div>
+        <div class="hero-tags">
+          <span>沉浸式声场</span>
+          <span>独立音乐人</span>
+          <span>创作协作</span>
+          <span>动态视觉</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="welcome-stats section-panel">
+      <div class="stats-copy">
+        <p class="stats-lead" data-scroll-float data-scroll-stagger="0.025">已有</p>
+        <p class="stats-number-wrap">
+          <span class="stats-number" data-count-up data-count-to="10000" data-count-duration="2" data-count-delay="0.3">10,000</span>
+          <span class="stats-descriptor" data-scroll-float data-scroll-stagger="0.02">位用户、独立音乐人加入</span>
+        </p>
+        <p class="stats-sub">与我们一起构建一个沉浸式的小众音乐社区。</p>
+      </div>
+
+      <div class="section-header">
+        <span class="eyebrow" data-scroll-float>FEATURED ARTISTS</span>
+        <h2 class="section-heading" data-scroll-float data-scroll-stagger="0.025">知名音乐人</h2>
+      </div>
+      <div class="circular-gallery" data-circular-gallery data-bend="1" data-scroll-speed="2" data-scroll-ease="0.05">
+        <div class="circular-gallery-track">
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist1/400/520?grayscale" alt="音乐人 1" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Aurora Wave</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist2/400/520?grayscale" alt="音乐人 2" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Neon Drift</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist3/400/520?grayscale" alt="音乐人 3" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Luna Echo</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist4/400/520?grayscale" alt="音乐人 4" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Solstice</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist5/400/520?grayscale" alt="音乐人 5" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Velvet Noise</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist6/400/520?grayscale" alt="音乐人 6" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Ember Tide</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist7/400/520?grayscale" alt="音乐人 7" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Pixel Glow</span>
+            </div>
+          </div>
+          <div class="circular-gallery-card">
+            <div class="circular-gallery-card-frame">
+              <img class="circular-gallery-card-img" src="https://picsum.photos/seed/artist8/400/520?grayscale" alt="音乐人 8" loading="lazy">
+              <div class="circular-gallery-card-gradient"></div>
+              <span class="circular-gallery-card-label">Starfall</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="welcome-sponsors section-panel">
+      <div class="section-header">
+        <span class="eyebrow" data-scroll-float>OUR SPONSORS</span>
+        <h2 class="section-heading" data-scroll-float data-scroll-stagger="0.025">赞助商与合作伙伴</h2>
+      </div>
+      <div class="logo-loop" data-logo-loop>
+        <div class="logo-loop-inner">
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #ff4f9a, #ff9f4f);"></div>
+            <span>SoundCloud</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #7c5cff, #19d3ff);"></div>
+            <span>Bandcamp</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #19d3ff, #7c5cff);"></div>
+            <span>Spotify</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #ff9f4f, #ff4f9a);"></div>
+            <span>Apple Music</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #7c5cff, #ff4f9a);"></div>
+            <span>Tidal</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #19d3ff, #ff9f4f);"></div>
+            <span>Deezer</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #ff4f9a, #7c5cff);"></div>
+            <span>Ableton</span>
+          </div>
+          <div class="logo-loop-item">
+            <div class="logo-loop-icon" style="background: linear-gradient(135deg, #7c5cff, #19d3ff);"></div>
+            <span>Splice</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+      <button class="modal-close" aria-label="关闭弹窗">&times;</button>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="login">登录</button>
+        <button class="modal-tab" data-tab="register">注册</button>
+      </div>
+
+      <div class="modal-panel active" data-panel="login">
+        <form action="/api/login" method="POST" class="form-stack">
+          <div class="field-group">
+            <label class="field-label" for="modal-login-username">账号</label>
+            <input id="modal-login-username" class="field-input" type="text" name="username" placeholder="请输入账号" required>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="modal-login-password">密码</label>
+            <input id="modal-login-password" class="field-input" type="password" name="password" placeholder="请输入密码" required>
+          </div>
+          <button type="submit" class="btn btn-primary auth-submit btn-glow">登录进入</button>
+        </form>
+        <div class="link-stack">
+          <a href="#" class="link-switch-tab" data-tab="register">没有账号？立即注册</a>
+        </div>
+      </div>
+
+      <div class="modal-panel" data-panel="register">
+        <form action="/api/register" method="POST" class="form-stack">
+          <div class="field-group">
+            <label class="field-label" for="modal-register-username">账号</label>
+            <input id="modal-register-username" class="field-input" type="text" name="username" placeholder="请输入账号" required>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="modal-register-password">密码</label>
+            <input id="modal-register-password" class="field-input" type="password" name="password" placeholder="请输入密码" required>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="modal-register-repassword">确认密码</label>
+            <input id="modal-register-repassword" class="field-input" type="password" name="repassword" placeholder="请再次输入密码" required>
+          </div>
+          <button type="submit" class="btn btn-primary auth-submit btn-glow">立即注册</button>
+        </form>
+        <div class="link-stack">
+          <a href="#" class="link-switch-tab" data-tab="login">已有账号？立即登录</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/gradual-blur.js"></script>
+  <script src="/js/welcome-3d.js"></script>
+  <script src="/js/blur-text.js"></script>
+  <script src="/js/scroll-float.js"></script>
+  <script src="/js/count-up.js"></script>
+  <script src="/js/card-nav.js"></script>
+  <script src="/js/circular-gallery.js"></script>
+  <script src="/js/logo-loop.js"></script>
+  <script src="/js/welcome.js"></script>
+</body>
+</html>

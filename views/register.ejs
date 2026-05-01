@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/register.css">
+  <link rel="stylesheet" href="/css/blur-text.css">
+  <link rel="stylesheet" href="/css/gradual-blur.css">
+</head>
+<body class="auth-page page-shell">
+  <div class="noise-layer"></div>
+  <div class="auth-orb auth-orb-a"></div>
+  <div class="auth-orb auth-orb-c"></div>
+  <main class="auth-layout center-shell">
+    <section class="auth-aside">
+      <span class="eyebrow" data-blur-text="chars">CREATE YOUR SPACE</span>
+      <h1 data-blur-text="words">注册一个属于你的声场身份，把收藏、作品与灵感统一收纳。</h1>
+      <p data-blur-text="words">从第一次登录开始，沉浸式体验、创作者主页和个性化播放流全部为你展开。</p>
+      <div class="auth-badges">
+        <span>沉浸式视觉</span>
+        <span>创作空间</span>
+        <span>社区闭环</span>
+      </div>
+    </section>
+    <section class="panel-card form-card auth-card deluxe-card">
+      <h2 class="form-title brand-title">注册账号</h2>
+      <p class="form-subtitle">创建你的账号，进入小众音乐社区</p>
+      <form action="/api/register" method="POST" class="form-stack">
+        <div class="field-group">
+          <label class="field-label" for="register-username">账号</label>
+          <input id="register-username" class="field-input" type="text" name="username" placeholder="请输入账号" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="register-password">密码</label>
+          <input id="register-password" class="field-input" type="password" name="password" placeholder="请输入密码" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="register-repassword">确认密码</label>
+          <input id="register-repassword" class="field-input" type="password" name="repassword" placeholder="请再次输入密码" required>
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit btn-glow">立即注册</button>
+      </form>
+      <div class="link-stack">
+        <a href="/login">已有账号？立即登录</a>
+        <a href="/">返回欢迎页</a>
+      </div>
+    </section>
+  </main>
+  <script src="/js/gradual-blur.js"></script>
+  <script src="/js/blur-text.js"></script>
+</body>
+</html>

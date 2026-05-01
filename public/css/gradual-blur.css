@@ -1,0 +1,14 @@
+.gradual-blur-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7rem;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.gradual-blur-top > div {
+  pointer-events: none;
+}

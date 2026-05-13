@@ -31,6 +31,9 @@
     <section class="panel-card form-card auth-card deluxe-card">
       <h2 class="form-title brand-title">注册账号</h2>
       <p class="form-subtitle">创建你的账号，进入小众音乐社区</p>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="auth-error"><%= error %></div>
+      <% } %>
       <form action="/api/register" method="POST" class="form-stack">
         <div class="field-group">
           <label class="field-label" for="register-username">账号</label>

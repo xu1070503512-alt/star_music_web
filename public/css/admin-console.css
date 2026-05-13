@@ -1,0 +1,173 @@
+#adminConsoleOverlay {
+  position: fixed;
+  z-index: 9999;
+  top: 60px;
+  right: 20px;
+  width: 360px;
+  max-height: 70vh;
+}
+
+.admin-console-window {
+  background: rgba(14, 20, 34, 0.95);
+  border: 1px solid rgba(124, 92, 255, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 92, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-console-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: move;
+  user-select: none;
+  background: rgba(124, 92, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-console-header .console-icon {
+  font-size: 1rem;
+}
+
+.admin-console-header .console-title {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c8c0ff;
+}
+
+.admin-console-header .console-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.admin-console-header .console-close:hover {
+  background: rgba(255, 80, 80, 0.4);
+  color: #fff;
+}
+
+.admin-console-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  max-height: 55vh;
+}
+
+.admin-console-body .section-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 10px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-console-body .section-label:first-child {
+  margin-top: 0;
+}
+
+.console-field {
+  margin-bottom: 8px;
+}
+
+.console-field label {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 3px;
+}
+
+.console-field input,
+.console-field textarea {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.console-field input:focus,
+.console-field textarea:focus {
+  border-color: rgba(124, 92, 255, 0.6);
+}
+
+.console-field textarea {
+  min-height: 52px;
+}
+
+.console-save-bar {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  gap: 8px;
+}
+
+.console-save-bar .console-save-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #7c5cff, #5b3ce0);
+  color: #fff;
+  transition: opacity 0.2s;
+}
+
+.console-save-bar .console-save-btn:hover {
+  opacity: 0.85;
+}
+
+.console-save-bar .console-save-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.console-save-bar .console-status {
+  font-size: 0.7rem;
+  color: #7c5cff;
+  line-height: 33px;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Nav trigger */
+.admin-console-trigger {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  background: rgba(124, 92, 255, 0.12);
+  color: #c8c0ff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+
+.admin-console-trigger:hover {
+  background: rgba(124, 92, 255, 0.25);
+  border-color: rgba(124, 92, 255, 0.6);
+}

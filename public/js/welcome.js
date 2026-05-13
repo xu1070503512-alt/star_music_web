@@ -244,4 +244,29 @@ document.addEventListener('DOMContentLoaded', function () {
   tabs.forEach(function (tab) { tab.addEventListener('click', function () { switchToTab(tab.dataset.tab); }); });
   switchLinks.forEach(function (link) { link.addEventListener('click', function (e) { e.preventDefault(); switchToTab(link.dataset.tab); }); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal(); });
+
+  // Auto-open from URL params
+  var params = new URLSearchParams(window.location.search);
+  var autoTab = params.get('auth');
+  if (autoTab === 'login' || autoTab === 'register') {
+    openModal(autoTab);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  if (params.get('registered') === '1') {
+    openModal('login');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  var errorMsg = params.get('error');
+  if (errorMsg) {
+    var errEl = document.getElementById('auth-error');
+    if (!errEl) {
+      errEl = document.createElement('div');
+      errEl.id = 'auth-error';
+      errEl.style.cssText = 'color:#ff5c5c;font-size:0.8rem;margin:10px 0;text-align:center';
+      var form = overlay.querySelector('.modal-panel.active form') || overlay.querySelector('form');
+      if (form) form.parentNode.insertBefore(errEl, form);
+    }
+    errEl.textContent = decodeURIComponent(errorMsg);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 });

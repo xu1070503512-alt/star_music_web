@@ -1,0 +1,198 @@
+  <script src="/js/visualizer-waveform.js"></script>
+  <script src="/js/gradual-blur.js"></script>
+  <script>
+    (function () {
+      var numFields = ['cfgWidth','cfgHeight','cfgBarWidth','cfgBarGap','cfgStepWidth','cfgStepGap','cfgMinBarH',
+        'cfgDeadzone','cfgRadialArc','cfgRadialRot','cfgFilterRadius','cfgCutoffLow','cfgCutoffHigh',
+        'cfgFloor','cfgCeiling','cfgSlope','cfgRolloffQ','cfgRolloffRate','cfgGravity','cfgGradRatio',
+        'cfgRangeMid','cfgRangeCrest','cfgChSpacing'];
+      var checkFields = ['cfgLogScale','cfgMirrorFreq','cfgRadialLayout','cfgRadialInvert','cfgRoundedCaps','cfgFastPeaks'];
+      var selectFields = ['cfgDisplayMode','cfgRenderMode','cfgChannelMode','cfgPulseMode','cfgFftSize',
+        'cfgWindow','cfgInterp','cfgFilterMode','cfgSmooth'];
+      var textFields = ['cfgColorBase','cfgColorCrest','cfgColorMiddle'];
+      var isAdmin = (window.__STAR_MUSIC_HOME__ || {}).userRole === 'admin';
+
+      if (isAdmin) {
+        var badge = document.getElementById('vizAdminBadge');
+        var btn = document.getElementById('vizSaveDefaults');
+        if (badge) badge.style.display = '';
+        if (btn) btn.style.display = '';
+        if (btn) btn.addEventListener('click', async function () {
+          btn.disabled = true;
+          btn.textContent = '保存中...';
+          try {
+            var r = await fetch('/api/waveform/settings', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(readAll()) });
+            var d = await r.json();
+            btn.textContent = d.ok ? '已保存' : '保存失败';
+          } catch(e) { btn.textContent = '网络错误'; }
+          setTimeout(function () { btn.disabled = false; btn.textContent = '保存为默认'; }, 2000);
+        });
+      }
+
+      numFields.forEach(function (id) {
+        var sl = document.getElementById(id);
+        var nr = document.getElementById(id + 'N');
+        if (!sl || !nr) return;
+        sl.addEventListener('input', function () { nr.value = sl.value; applyAll(); });
+        nr.addEventListener('input', function () { sl.value = nr.value; applyAll(); });
+        nr.addEventListener('change', function () { sl.value = nr.value; applyAll(); });
+      });
+
+      checkFields.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', applyAll);
+      });
+
+      selectFields.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', function () { applyAll(); updateVisibility(); });
+      });
+
+      textFields.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', applyAll);
+      });
+
+      function readAll() {
+        var c = {};
+        numFields.forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) c[id.replace('cfg','').replace('BarH','MinBarH').replace('ChSpacing','ChannelSpacing')] = parseFloat(el.value);
+        });
+        checkFields.forEach(function (id) {
+          var el = document.getElementById(id);
+          c[id.replace('cfg','')] = !!el.checked;
+        });
+        selectFields.forEach(function (id) {
+          var el = document.getElementById(id);
+          var k = id.replace('cfg','');
+          k = k.replace('Smooth','TemporalSmoothing').replace('Interp','InterpMode');
+          if (el) c[k] = el.value;
+        });
+        textFields.forEach(function (id) {
+          var el = document.getElementById(id);
+          var k = id.replace('cfg','');
+          if (el) c[k] = el.value;
+        });
+        c.BarWidth = c.BarWidth || 24; c.BarGap = c.BarGap || 6;
+        c.StepWidth = c.StepWidth || 8; c.StepGap = c.StepGap || 4;
+        c.MinBarH = c.MinBarH || 0; c.Width = c.Width || 800; c.Height = c.Height || 225;
+        c.Deadzone = c.Deadzone || 20; c.RadialArc = c.RadialArc || 360; c.RadialRotation = c.RadialRotation || 0;
+        c.FilterRadius = c.FilterRadius || 1.5; c.CutoffLow = c.CutoffLow || 30; c.CutoffHigh = c.CutoffHigh || 17500;
+        c.Floor = c.Floor || -65; c.Ceiling = c.Ceiling || 0; c.Slope = c.Slope || 0;
+        c.RolloffQ = c.RolloffQ || 0; c.RolloffRate = c.RolloffRate || 0;
+        c.Gravity = c.Gravity || 0.65; c.GradRatio = c.GradRatio || 0.75;
+        c.RangeMiddle = c.RangeMiddle || -20; c.RangeCrest = c.RangeCrest || -9;
+        c.ChannelSpacing = c.ChannelSpacing || 0;
+        c.DisplayMode = c.DisplayMode || 'bars'; c.ChannelMode = c.ChannelMode || 'mono';
+        c.TemporalSmoothing = c.TemporalSmoothing || 'exp_moving_avg';
+        c.InterpMode = c.InterpMode || 'catmull_rom'; c.FilterMode = c.FilterMode || 'none';
+        c.WindowFunc = c.WindowFunc || 'hann'; c.PulseMode = c.PulseMode || 'peak_magnitude';
+        c.RenderMode = c.RenderMode || 'solid';
+        return c;
+      }
+
+      function applyAll() {
+        var eng = window.__waveformEngine;
+        if (eng) eng.applySettings(readAll());
+      }
+
+      function updateVisibility() {
+        var dm = document.getElementById('cfgDisplayMode');
+        var rm = document.getElementById('cfgRenderMode');
+        var cl = document.getElementById('cfgChannelMode');
+        var fs = document.getElementById('cfgSmooth');
+        var fm = document.getElementById('cfgFilterMode');
+        var rd = document.getElementById('cfgRadialLayout');
+        if (!dm || !rm) return;
+        var d = dm.value, r = rm.value;
+        var isBars = d==='bars'||d==='stepped_bars';
+        var isMeter = d==='level_meter'||d==='stepped_level_meter';
+        document.getElementById('grpPulseMode').style.display = (r==='pulse'?'':'none');
+        document.getElementById('grpColorCrest').style.display = (r==='gradient'||r==='pulse'?'':'none');
+        document.getElementById('grpColorMiddle').style.display = (r==='range'?'':'none');
+        var sectR = document.getElementById('sectRange');
+        if (sectR) sectR.style.display = (r==='range'?'':'none');
+        var sectF = document.getElementById('sectFilter');
+        if (sectF && fm) sectF.style.display = (fm.value==='gauss'?'':'none');
+        var grpG = document.getElementById('grpGravity');
+        var grpP = document.getElementById('grpFastPeaks');
+        if (fs && grpG) grpG.style.display = (fs.value==='none'?'none':'');
+        if (fs && grpP) grpP.style.display = (fs.value==='none'?'none':'');
+        var grpRI = document.getElementById('grpRadialInv');
+        var sectRd = document.getElementById('sectRadial');
+        if (rd && grpRI) grpRI.style.display = (rd.checked?'':'none');
+        if (rd && sectRd) sectRd.style.display = (rd.checked?'':'none');
+      }
+
+      // Load defaults from server
+      fetch('/api/waveform/settings').then(function(r){return r.json()}).then(function(d){
+        if (!d.ok) return;
+        var s = d.settings;
+        var eng = window.__waveformEngine;
+        if (eng) eng.applySettings(s);
+        // Update UI to match
+        setVal('cfgDisplayMode', s.DisplayMode||'bars');
+        setVal('cfgRenderMode', s.RenderMode||'solid');
+        setVal('cfgChannelMode', s.ChannelMode||'mono');
+        setVal('cfgPulseMode', s.PulseMode||'peak_magnitude');
+        setVal('cfgFftSize', String(s.FftSize||4096));
+        setVal('cfgWindow', s.WindowFunc||'hann');
+        setVal('cfgInterp', s.InterpMode||'catmull_rom');
+        setVal('cfgFilterMode', s.FilterMode||'none');
+        setVal('cfgSmooth', s.TemporalSmoothing||'exp_moving_avg');
+        setNum('cfgWidth','cfgWidthN', s.Width||800);
+        setNum('cfgHeight','cfgHeightN', s.Height||225);
+        setNum('cfgBarWidth','cfgBarWidthN', s.BarWidth||24);
+        setNum('cfgBarGap','cfgBarGapN', s.BarGap||6);
+        setNum('cfgStepWidth','cfgStepWidthN', s.StepWidth||8);
+        setNum('cfgStepGap','cfgStepGapN', s.StepGap||4);
+        setNum('cfgMinBarH','cfgMinBarHN', s.MinBarH||0);
+        setNum('cfgDeadzone','cfgDeadzoneN', s.Deadzone||20);
+        setNum('cfgRadialArc','cfgRadialArcN', s.RadialArc||360);
+        setNum('cfgRadialRot','cfgRadialRotN', s.RadialRotation||0);
+        setNum('cfgFilterRadius','cfgFilterRadiusN', s.FilterRadius||1.5);
+        setNum('cfgCutoffLow','cfgCutoffLowN', s.CutoffLow||30);
+        setNum('cfgCutoffHigh','cfgCutoffHighN', s.CutoffHigh||17500);
+        setNum('cfgFloor','cfgFloorN', s.Floor||-65);
+        setNum('cfgCeiling','cfgCeilingN', s.Ceiling||0);
+        setNum('cfgSlope','cfgSlopeN', s.Slope||0);
+        setNum('cfgRolloffQ','cfgRolloffQN', s.RolloffQ||0);
+        setNum('cfgRolloffRate','cfgRolloffRateN', s.RolloffRate||0);
+        setNum('cfgGravity','cfgGravityN', s.Gravity!=null?s.Gravity:0.65);
+        setNum('cfgGradRatio','cfgGradRatioN', s.GradRatio||0.75);
+        setNum('cfgRangeMid','cfgRangeMidN', s.RangeMiddle!=null?s.RangeMiddle:-20);
+        setNum('cfgRangeCrest','cfgRangeCrestN', s.RangeCrest!=null?s.RangeCrest:-9);
+        setNum('cfgChSpacing','cfgChSpacingN', s.ChannelSpacing||0);
+        setChecked('cfgLogScale', s.LogScale!==false);
+        setChecked('cfgMirrorFreq', !!s.MirrorFreqAxis);
+        setChecked('cfgRadialLayout', !!s.RadialLayout);
+        setChecked('cfgRadialInvert', !!s.RadialInvert);
+        setChecked('cfgRoundedCaps', !!s.RoundedCaps);
+        setChecked('cfgFastPeaks', !!s.FastPeaks);
+        if (s.ColorBase) document.getElementById('cfgColorBase').value = s.ColorBase;
+        if (s.ColorCrest) document.getElementById('cfgColorCrest').value = s.ColorCrest;
+        if (s.ColorMiddle) document.getElementById('cfgColorMiddle').value = s.ColorMiddle;
+        updateVisibility();
+      }).catch(function(){});
+
+      function setNum(slId, nrId, v) {
+        var sl = document.getElementById(slId);
+        var nr = document.getElementById(nrId);
+        if (sl) sl.value = v;
+        if (nr) nr.value = v;
+      }
+      function setVal(id, v) {
+        var el = document.getElementById(id);
+        if (el) el.value = v;
+      }
+      function setChecked(id, v) {
+        var el = document.getElementById(id);
+        if (el) el.checked = v;
+      }
+    })();
+  </script>
+  <script src="/js/card-nav.js"></script>

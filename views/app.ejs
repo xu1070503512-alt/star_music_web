@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -13,13 +13,15 @@
   <link rel="stylesheet" href="/css/home.css">
   <link rel="stylesheet" href="/css/myspace.css">
   <link rel="stylesheet" href="/css/upload.css">
+  <link rel="stylesheet" href="/css/visualizer-panel.css">
   <link rel="stylesheet" href="/css/card-nav.css">
-  <link rel="stylesheet" href="/css/blur-text.css">
-  <link rel="stylesheet" href="/css/scroll-float.css">
   <link rel="stylesheet" href="/css/gradual-blur.css">
+  <% if (user.role === 'admin') { %>
+  <link rel="stylesheet" href="/css/admin-console.css">
+  <% } %>
 </head>
 <body class="page-shell experience-page">
-  <canvas id="visualizerCanvas" class="visualizer-canvas" aria-hidden="true"></canvas>
+  <div id="magicRingsContainer"></div>
   <div class="noise-layer"></div>
   <div class="ambient-blob ambient-blob-a"></div>
   <div class="ambient-blob ambient-blob-b"></div>
@@ -31,45 +33,54 @@
           <div class="hamburger-line"></div>
           <div class="hamburger-line"></div>
         </div>
-        <a class="card-nav-logo" href="/app?page=home" aria-label="小星音吧首页" data-page>✦</a>
+        <a class="card-nav-logo" href="/app?page=home" aria-label="小星音吧首页" data-page>S</a>
         <a href="/api/logout" class="card-nav-cta secondary">退出</a>
       </div>
       <div class="card-nav-content" aria-hidden="true">
         <div class="nav-card">
           <div class="nav-card-label">音乐</div>
           <div class="nav-card-links">
-            <a class="nav-card-link" href="/app?page=home" data-page>🏠 首页</a>
-            <a class="nav-card-link" href="#">🔍 探索发现</a>
-            <a class="nav-card-link" href="#">🔥 热门新声</a>
+            <a class="nav-card-link" href="/app?page=home" data-page>首页</a>
+            <a class="nav-card-link" href="/app?page=visualizer" data-page>可视化</a>
+            <a class="nav-card-link" href="/">星音前厅</a>
+            <a class="nav-card-link" href="#">探索发现</a>
+            <a class="nav-card-link" href="#">热门新声</a>
           </div>
         </div>
         <div class="nav-card">
-          <div class="nav-card-label">空间</div>
+          <div class="nav-card-label">社区</div>
           <div class="nav-card-links">
-            <a class="nav-card-link" href="/app?page=myspace" data-page>👤 <%= user.nickname || user.username %></a>
+            <a class="nav-card-link" href="/app?page=myspace" data-page><%= user.nickname || user.username %></a>
             <% if(user.role === 'admin'){ %>
-              <a class="nav-card-link" href="/app?page=upload" data-page>📤 上传音乐</a>
+              <a class="nav-card-link" href="/app?page=upload" data-page>上传歌曲</a>
             <% } %>
           </div>
         </div>
         <div class="nav-card">
-          <div class="nav-card-label">账户</div>
+          <div class="nav-card-label">关于</div>
           <div class="nav-card-links">
-            <a class="nav-card-link" href="/api/logout">🚪 退出登录</a>
+            <% if (user.role === 'admin') { %>
+            <a class="nav-card-link" href="#" id="adminConsoleBtn">控制台</a>
+            <% } %>
+            <a class="nav-card-link" href="/api/logout">退出登录</a>
           </div>
         </div>
       </div>
     </nav>
   </div>
 
+  <!-- ============== PANEL STAGE ============== -->
+  <div class="panel-stage">
+    <div class="panel-track">
+
   <!-- ============== PANEL: HOME ============== -->
   <div class="app-panel" id="panel-home">
     <main class="page-container home-page">
       <section class="hero-panel panel-card glass-panel">
         <div class="hero-copy">
-          <span class="eyebrow" data-blur-text="chars">NEON STUDY LOUNGE</span>
-          <h1 data-blur-text="words">让旋律、霓虹与注意力在同一空间里共振。</h1>
-          <p class="hero-summary" data-blur-text="words">围绕独立音乐、深夜创作和高质感播放体验，构建一个既能沉浸聆听，又能高效管理的声场社区。</p>
+          <span class="eyebrow" data-edit-key="homeEyebrow"><%= (pageContent.home && pageContent.home.homeEyebrow) || 'NEON STUDY LOUNGE' %></span>
+          <h1 data-edit-key="homeTitle"><%= (pageContent.home && pageContent.home.homeTitle) || '让旋律、霓虹与注意力在同一空间里共振。' %></h1>
+          <p class="hero-summary" data-edit-key="homeSummary"><%= (pageContent.home && pageContent.home.homeSummary) || '围绕独立音乐、深夜创作和高质感播放体验，构建一个既能沉浸聆听，又能高效管理的声场社区。' %></p>
           <div class="hero-stats">
             <article><strong><%= communityStats.totalTracks %></strong><span>在库曲目</span></article>
             <article><strong><%= communityStats.totalArtists %></strong><span>独立音乐人</span></article>
@@ -77,53 +88,50 @@
             <article><strong><%= communityStats.collectedCount %></strong><span>我的收藏</span></article>
           </div>
           <div class="hero-actions">
-            <button id="toggleVisualizerBtn" class="btn btn-primary btn-glow" type="button">关闭可视化</button>
-            <a href="/app?page=myspace" class="btn btn-secondary" data-page>进入个人空间</a>
+            <button class="btn btn-primary btn-glow" id="toggleVisualizerBtn" type="button">切换可视化</button>
           </div>
         </div>
         <aside class="hero-feature-card">
           <span class="feature-label">Now Featuring</span>
           <% if (featuredTrack) { %>
-            <div class="feature-cover-wrap"><img src="<%= featuredTrack.cover_path %>" alt="<%= featuredTrack.song_name %> 封面" class="feature-cover"></div>
+            <div class="feature-cover-wrap"><img src="<%= featuredTrack.cover_path %>" alt="<%= featuredTrack.song_name %>"></div>
             <h2><%= featuredTrack.song_name %></h2>
-            <p><%= featuredTrack.singer %> · <%= featuredTrack.uploader_name %></p>
-            <div class="feature-meta"><span><%= featuredTrack.play_count || 0 %> 次播放</span><span><%= featuredTrack.uploader_role === 'admin' ? '官方上传' : '社区上传' %></span></div>
+            <p><%= featuredTrack.singer %></p>
           <% } else { %>
-            <div class="feature-empty">音乐库暂时为空，等待新的声音进入这片夜色。</div>
+            <h2>暂无曲目</h2>
           <% } %>
         </aside>
       </section>
       <section class="toolbar-panel panel-card glass-panel">
         <div class="toolbar-main">
-          <label class="search-box" for="musicSearchInput"><span>搜索歌曲 / 音乐人</span><input id="musicSearchInput" class="field-input toolbar-input" type="text" placeholder="输入歌名、歌手或上传者"></label>
+          <label class="search-box" for="musicSearchInput"><span>搜索 歌名 / 歌手</span><input id="musicSearchInput" class="toolbar-input" type="text" placeholder="输入关键词筛选..."></label>
           <div class="filter-chip-group" id="filterChipGroup">
-            <button class="filter-chip active" type="button" data-filter="all">全部</button>
-            <button class="filter-chip" type="button" data-filter="collected">已收藏</button>
-            <button class="filter-chip" type="button" data-filter="uncollected">未收藏</button>
-            <button class="filter-chip" type="button" data-filter="popular">热门优先</button>
+            <button class="filter-chip active" type="button" data-filter="all" data-edit-key="filterAll"><%= (pageContent.home && pageContent.home.filterAll) || '全部' %></button>
+            <button class="filter-chip" type="button" data-filter="collected" data-edit-key="filterCollected"><%= (pageContent.home && pageContent.home.filterCollected) || '已收藏' %></button>
+            <button class="filter-chip" type="button" data-filter="uncollected" data-edit-key="filterUncollected"><%= (pageContent.home && pageContent.home.filterUncollected) || '未收藏' %></button>
+            <button class="filter-chip" type="button" data-filter="popular" data-edit-key="filterPopular"><%= (pageContent.home && pageContent.home.filterPopular) || '热门优先' %></button>
           </div>
         </div>
-        <div class="toolbar-meta"><span id="resultCountText">共 <%= musicList.length %> 首曲目</span><span class="toolbar-hint">支持顺序 / 循环 / 随机播放、音量记忆、可视化开关</span></div>
+        <div class="toolbar-meta"><span id="resultCountText">共 <%= musicList.length %> 首曲目</span><span class="toolbar-hint">支持顺序 / 循环 / 随机播放、音量记忆与可视化开关</span></div>
       </section>
       <section class="music-grid-section">
         <div class="section-heading-row">
-          <div><span class="eyebrow" data-scroll-float>COMMUNITY TRACKS</span><h2 class="section-title heading-no-margin" data-scroll-float data-scroll-stagger="0.025">沉浸式音乐列表</h2></div>
+          <div><span class="eyebrow">COMMUNITY TRACKS</span><h2 class="section-title heading-no-margin">沉浸式音乐列表</h2></div>
         </div>
         <div class="music-grid" id="musicGrid">
           <% for(let item of musicList) { %>
-            <article class="music-card" data-music-id="<%= item.id %>" data-name="<%= item.song_name %>" data-singer="<%= item.singer %>" data-uploader="<%= item.uploader_name %>" data-cover="<%= item.cover_path %>" data-src="<%= item.mp3_path %>" data-play-count="<%= item.play_count || 0 %>" data-collected="<%= collectedIds && collectedIds.includes(item.id) ? 'true' : 'false' %>">
+            <article class="music-card" data-music-id="<%= item.id %>" data-name="<%= item.song_name %>" data-singer="<%= item.singer %>" data-cover="<%= item.cover_path %>" data-src="<%= item.mp3_path %>" data-play-count="<%= item.play_count || 0 %>" data-collected="<%= collectedIds && collectedIds.includes(item.id) ? 'true' : 'false' %>">
               <div class="music-card-cover-wrap">
                 <img src="<%= item.cover_path %>" class="music-card-cover" alt="<%= item.song_name %> 封面">
                 <div class="music-card-glow"></div>
-                <div class="music-card-overlay"><button class="play-fab" type="button" aria-label="播放 <%= item.song_name %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-uploader="<%= item.uploader_name %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">▶</button></div>
+                <div class="music-card-overlay"><button class="play-fab" type="button" aria-label="播放 <%= item.song_name %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">></button></div>
               </div>
               <div class="music-card-body">
                 <div class="music-card-topline"><span class="pill"><%= item.uploader_role === 'admin' ? '官方推荐' : '社区共创' %></span><span class="meta-light"><span class="play-count-text"><%= item.play_count || 0 %></span> 次播放</span></div>
                 <h3 class="music-card-title"><%= item.song_name %></h3>
                 <p class="music-card-subtitle"><%= item.singer %></p>
-                <p class="music-card-uploader">上传者：<%= item.uploader_name %></p>
                 <div class="music-card-actions">
-                  <button class="btn btn-primary btn-compact play-btn" type="button" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-uploader="<%= item.uploader_name %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">播放</button>
+                  <button class="btn btn-primary btn-compact play-btn" type="button" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">播放</button>
                   <button class="btn btn-accent btn-compact collect-btn <%= collectedIds && collectedIds.includes(item.id) ? 'is-collected' : '' %>" type="button" data-id="<%= item.id %>" <%= collectedIds && collectedIds.includes(item.id) ? 'disabled' : '' %>><%= collectedIds && collectedIds.includes(item.id) ? '已收藏' : '收藏' %></button>
                 </div>
               </div>
@@ -135,39 +143,550 @@
     </main>
   </div>
 
-  <!-- ============== PANEL: MYSPACE ============== -->
+    <!-- ============== PANEL: VISUALIZER ============== -->
+  <div class="app-panel app-panel-viz" id="panel-visualizer">
+    <div class="viz-layout">
+      <div class="viz-stage-card">
+        <div class="viz-stage" id="vizStage">
+          <canvas id="visualizerCanvas" class="visualizer-canvas" aria-hidden="true"></canvas>
+        </div>
+        <div class="viz-stage-placeholder" id="vizPlaceholder">
+          <span>播放音频后音波显示在此</span>
+        </div>
+      </div>
+
+      <div class="viz-settings" id="vizSettings">
+        <button class="viz-settings-toggle" id="vizSettingsToggle" type="button" title="收起设置面板">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="viz-toggle-label">音波设置</span>
+        </button>
+        <div class="viz-settings-body">
+        <div class="viz-settings-header">
+          <h2 class="section-title heading-no-margin">音波设置</h2>
+          <% if (user.role === 'admin') { %>
+          <span class="viz-admin-badge">管理员模式</span>
+          <% } %>
+        </div>
+        <div class="viz-settings-scroll">
+
+          <!-- Audio Input -->
+          <div class="viz-section">
+            <h3>音频输入</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control" style="display:none">
+                <label for="cfgAudioSource">音频源</label>
+                <select class="viz-select" id="cfgAudioSource">
+                  <option value="site_player">站点播放器</option>
+                </select>
+              </div>
+              <div class="viz-control">
+                <label for="cfgAudioSyncOffset">同步偏移 <span class="viz-unit">ms</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgAudioSyncOffset" min="-1000" max="1000" value="0" step="10">
+                  <input class="viz-number" type="number" id="cfgAudioSyncOffsetN" value="0" min="-1000" max="1000" step="10">
+                </div>
+              </div>
+            </div>
+            <div class="viz-check-grid">
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgHideWhenSilent">
+                <label for="cfgHideWhenSilent">静音时隐藏</label>
+              </div>
+              <div class="viz-check-item" style="display:none">
+                <input type="checkbox" id="cfgSilentProcess">
+                <label for="cfgSilentProcess">静音继续处理</label>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgNormalizeVolume">
+                <label for="cfgNormalizeVolume">标准化音量</label>
+              </div>
+            </div>
+            <div id="sectNormalize" style="display:none">
+              <div class="viz-grid two-col" style="margin-top:10px">
+                <div class="viz-control">
+                  <label for="cfgTargetVolume">目标音量 <span class="viz-unit">dBFS</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgTargetVolume" min="-60" max="0" value="-8" step="1">
+                    <input class="viz-number" type="number" id="cfgTargetVolumeN" value="-8" min="-60" max="0" step="1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgMaxGain">最大增益 <span class="viz-unit">dB</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgMaxGain" min="0" max="45" value="30" step="1">
+                    <input class="viz-number" type="number" id="cfgMaxGainN" value="30" min="0" max="45" step="1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Display & Layout -->
+          <div class="viz-section">
+            <h3>显示与布局</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control">
+                <label for="cfgDisplayMode">显示模式</label>
+                <select class="viz-select" id="cfgDisplayMode">
+                  <option value="curve">曲形</option>
+                  <option value="bars">条形</option>
+                  <option value="stepped_bars">阶梯式条形</option>
+                  <option value="level_meter">液压形</option>
+                  <option value="stepped_level_meter">阶梯式液压</option>
+                  <option value="waveform">波形</option>
+                </select>
+              </div>
+              <div class="viz-control">
+                <label for="cfgRenderMode">渲染模式</label>
+                <select class="viz-select" id="cfgRenderMode">
+                  <option value="solid">固实</option>
+                  <option value="line">线条</option>
+                  <option value="gradient">渐变</option>
+                  <option value="range">范围</option>
+                  <option value="pulse">脉冲</option>
+                </select>
+              </div>
+              <div class="viz-control">
+                <label for="cfgWidth">宽度 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgWidth" min="32" max="3840" value="800" step="1">
+                  <input class="viz-number" type="number" id="cfgWidthN" value="800" min="32" max="3840" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgHeight">高度 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgHeight" min="32" max="2160" value="225" step="1">
+                  <input class="viz-number" type="number" id="cfgHeightN" value="225" min="32" max="2160" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgChannelMode">声道模式</label>
+                <select class="viz-select" id="cfgChannelMode">
+                  <option value="mono">单声道</option>
+                  <option value="stereo">立体声</option>
+                  <option value="single" style="display:none">单通道</option>
+                </select>
+              </div>
+              <div class="viz-control" id="grpChannelSelect" style="display:none">
+                <label for="cfgChannel">通道选择</label>
+                <input class="viz-number" type="number" id="cfgChannel" value="0" min="0" max="7" style="width:100%">
+              </div>
+              <div class="viz-control">
+                <label for="cfgChannelSpacing">声道间距 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgChannelSpacing" min="0" max="2160" value="0" step="1">
+                  <input class="viz-number" type="number" id="cfgChannelSpacingN" value="0" min="0" max="2160" step="1">
+                </div>
+              </div>
+            </div>
+            <div class="viz-check-grid" style="margin-top:10px">
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgLogScale" checked>
+                <label for="cfgLogScale">对数频率表</label>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgMirrorFreq">
+                <label for="cfgMirrorFreq">镜像频率轴</label>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgRadialLayout">
+                <label for="cfgRadialLayout">放射状布局</label>
+              </div>
+              <div class="viz-check-item" id="grpRadialInv" style="display:none">
+                <input type="checkbox" id="cfgRadialInvert">
+                <label for="cfgRadialInvert">反转放射方向</label>
+              </div>
+            </div>
+            <div id="sectRadial" style="display:none;margin-top:10px">
+              <div class="viz-grid two-col">
+                <div class="viz-control">
+                  <label for="cfgDeadzone">盲区 <span class="viz-unit">%</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgDeadzone" min="0" max="100" value="20" step="0.1">
+                    <input class="viz-number" type="number" id="cfgDeadzoneN" value="20" min="0" max="100" step="0.1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgRadialArc">弧度 <span class="viz-unit">°</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgRadialArc" min="0" max="360" value="360" step="0.1">
+                    <input class="viz-number" type="number" id="cfgRadialArcN" value="360" min="0" max="360" step="0.1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgRadialRot">旋转 <span class="viz-unit">°</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgRadialRot" min="0" max="360" value="0" step="0.1">
+                    <input class="viz-number" type="number" id="cfgRadialRotN" value="0" min="0" max="360" step="0.1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bars -->
+          <div class="viz-section">
+            <h3>条形参数</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control">
+                <label for="cfgBarWidth">条形宽 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgBarWidth" min="1" max="256" value="24" step="1">
+                  <input class="viz-number" type="number" id="cfgBarWidthN" value="24" min="1" max="256" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgBarGap">条形间距 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgBarGap" min="0" max="256" value="6" step="1">
+                  <input class="viz-number" type="number" id="cfgBarGapN" value="6" min="0" max="256" step="1">
+                </div>
+              </div>
+              <div class="viz-control" id="grpStepWidth" style="display:none">
+                <label for="cfgStepWidth">阶梯宽 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgStepWidth" min="1" max="256" value="8" step="1">
+                  <input class="viz-number" type="number" id="cfgStepWidthN" value="8" min="1" max="256" step="1">
+                </div>
+              </div>
+              <div class="viz-control" id="grpStepGap" style="display:none">
+                <label for="cfgStepGap">阶梯间距 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgStepGap" min="0" max="256" value="4" step="1">
+                  <input class="viz-number" type="number" id="cfgStepGapN" value="4" min="0" max="256" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgMinBarH">最低高度 <span class="viz-unit">px</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgMinBarH" min="0" max="1080" value="0" step="1">
+                  <input class="viz-number" type="number" id="cfgMinBarHN" value="0" min="0" max="1080" step="1">
+                </div>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgRoundedCaps">
+                <label for="cfgRoundedCaps">圆角</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- FFT & Smoothing -->
+          <div class="viz-section">
+            <h3>FFT 与平滑</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control">
+                <label for="cfgFftSize">FFT大小</label>
+                <select class="viz-select" id="cfgFftSize">
+                  <option value="256">256</option><option value="512">512</option>
+                  <option value="1024">1024</option><option value="2048">2048</option>
+                  <option value="4096" selected>4096</option>
+                  <option value="8192">8192</option><option value="16384">16384</option>
+                  <option value="32768">32768</option><option value="65536">65536</option>
+                </select>
+              </div>
+              <div class="viz-control">
+                <label for="cfgWindow">窗函数</label>
+                <select class="viz-select" id="cfgWindow">
+                  <option value="hann">海宁</option>
+                  <option value="hamming">汉明</option>
+                  <option value="blackman">Blackman</option>
+                  <option value="blackman_harris">Blackman-Harris</option>
+                  <option value="power_of_sine">正弦幂</option>
+                </select>
+              </div>
+              <div class="viz-control" id="grpSineExponent" style="display:none">
+                <label for="cfgSineExponent">正弦指数</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgSineExponent" min="1" max="16" value="2" step="1">
+                  <input class="viz-number" type="number" id="cfgSineExponentN" value="2" min="1" max="16" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgInterp">插值模式</label>
+                <select class="viz-select" id="cfgInterp">
+                  <option value="catmull_rom">立方 (Catmull-Rom)</option>
+                  <option value="lanczos">Lanczos</option>
+                  <option value="point">最近邻</option>
+                </select>
+              </div>
+              <div class="viz-control">
+                <label for="cfgFilterMode">滤波模式</label>
+                <select class="viz-select" id="cfgFilterMode">
+                  <option value="none">无</option>
+                  <option value="gauss">高斯</option>
+                </select>
+              </div>
+              <div class="viz-control" id="sectFilter" style="display:none">
+                <label for="cfgFilterRadius">滤波半径</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgFilterRadius" min="0" max="32" value="1.5" step="0.01">
+                  <input class="viz-number" type="number" id="cfgFilterRadiusN" value="1.5" min="0" max="32" step="0.01">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgSmooth">时间平滑</label>
+                <select class="viz-select" id="cfgSmooth">
+                  <option value="exp_moving_avg">指数加权</option>
+                  <option value="tv_exp_moving_avg">时变指数</option>
+                  <option value="none">无</option>
+                </select>
+              </div>
+              <div class="viz-control" id="grpGravity" style="display:none">
+                <label for="cfgGravity">惯性</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgGravity" min="0" max="1" value="0.65" step="0.01">
+                  <input class="viz-number" type="number" id="cfgGravityN" value="0.65" min="0" max="1" step="0.01">
+                </div>
+              </div>
+              <div class="viz-check-item" style="display:none" id="grpFastPeaksWrap">
+                <input type="checkbox" id="cfgFastPeaks">
+                <label for="cfgFastPeaks">快速峰值</label>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgAutoFftSize">
+                <label for="cfgAutoFftSize">自动FFT大小</label>
+              </div>
+              <div class="viz-check-item" id="grpFftSize">
+                <input type="checkbox" id="cfgEnableLargeFft">
+                <label for="cfgEnableLargeFft">启用大FFT (65536)</label>
+              </div>
+              <div class="viz-control" id="grpMeterBufferMs" style="display:none">
+                <label for="cfgMeterBufferMs">液压缓冲 <span class="viz-unit">ms</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgMeterBufferMs" min="16" max="1000" value="150" step="1">
+                  <input class="viz-number" type="number" id="cfgMeterBufferMsN" value="150" min="16" max="1000" step="1">
+                </div>
+              </div>
+              <div class="viz-check-item" id="grpRmsMode" style="display:none">
+                <input type="checkbox" id="cfgRmsMode" checked>
+                <label for="cfgRmsMode">RMS 模式</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Frequency Range -->
+          <div class="viz-section">
+            <h3>频率范围 &amp; dB</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control">
+                <label for="cfgCutoffLow">低频过滤 <span class="viz-unit">Hz</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgCutoffLow" min="0" max="24000" value="30" step="1">
+                  <input class="viz-number" type="number" id="cfgCutoffLowN" value="30" min="0" max="24000" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgCutoffHigh">高频过滤 <span class="viz-unit">Hz</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgCutoffHigh" min="0" max="24000" value="17500" step="1">
+                  <input class="viz-number" type="number" id="cfgCutoffHighN" value="17500" min="0" max="24000" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgFloor">最小分贝 <span class="viz-unit">dBFS</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgFloor" min="-120" max="0" value="-65" step="1">
+                  <input class="viz-number" type="number" id="cfgFloorN" value="-65" min="-120" max="0" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgCeiling">最大分贝 <span class="viz-unit">dBFS</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgCeiling" min="-120" max="0" value="0" step="1">
+                  <input class="viz-number" type="number" id="cfgCeilingN" value="0" min="-120" max="0" step="1">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgSlope">斜率</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgSlope" min="0" max="10" value="0" step="0.01">
+                  <input class="viz-number" type="number" id="cfgSlopeN" value="0" min="0" max="10" step="0.01">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgRolloffQ">滚降带宽</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgRolloffQ" min="0" max="10" value="0" step="0.01">
+                  <input class="viz-number" type="number" id="cfgRolloffQN" value="0" min="0" max="10" step="0.01">
+                </div>
+              </div>
+              <div class="viz-control">
+                <label for="cfgRolloffRate">滚降率 <span class="viz-unit">dB/oct</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgRolloffRate" min="0" max="65" value="0" step="0.01">
+                  <input class="viz-number" type="number" id="cfgRolloffRateN" value="0" min="0" max="65" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color & Output -->
+          <div class="viz-section">
+            <h3>颜色与输出</h3>
+            <div class="viz-grid two-col">
+              <div class="viz-control">
+                <label for="cfgColorBase">底端颜色</label>
+                <div class="viz-color-control">
+                  <input class="viz-text" type="text" id="cfgColorBase" value="#FFFFFFFF" maxlength="9">
+                  <input class="viz-color-picker" type="color" id="cfgColorBasePicker" value="#FFFFFF">
+                </div>
+              </div>
+              <div class="viz-control" id="grpColorCrest">
+                <label for="cfgColorCrest">顶端颜色</label>
+                <div class="viz-color-control">
+                  <input class="viz-text" type="text" id="cfgColorCrest" value="#FFFFFFFF" maxlength="9">
+                  <input class="viz-color-picker" type="color" id="cfgColorCrestPicker" value="#FFFFFF">
+                </div>
+              </div>
+              <div class="viz-control" id="grpColorMiddle" style="display:none">
+                <label for="cfgColorMiddle">中间颜色</label>
+                <div class="viz-color-control">
+                  <input class="viz-text" type="text" id="cfgColorMiddle" value="#FFFFFFFF" maxlength="9">
+                  <input class="viz-color-picker" type="color" id="cfgColorMiddlePicker" value="#FFFFFF">
+                </div>
+              </div>
+              <div class="viz-control" id="grpGradRatio" style="display:none">
+                <label for="cfgGradRatio">渐变比值</label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgGradRatio" min="0" max="4" value="0.75" step="0.01">
+                  <input class="viz-number" type="number" id="cfgGradRatioN" value="0.75" min="0" max="4" step="0.01">
+                </div>
+              </div>
+              <div class="viz-control" id="grpRangeMiddle" style="display:none">
+                <label for="cfgRangeMid">范围中间 <span class="viz-unit">dBFS</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgRangeMid" min="-120" max="0" value="-20" step="1">
+                  <input class="viz-number" type="number" id="cfgRangeMidN" value="-20" min="-120" max="0" step="1">
+                </div>
+              </div>
+              <div class="viz-control" id="grpRangeCrest" style="display:none">
+                <label for="cfgRangeCrest">范围波峰 <span class="viz-unit">dBFS</span></label>
+                <div class="viz-dual">
+                  <input class="viz-slider" type="range" id="cfgRangeCrest" min="-120" max="0" value="-9" step="1">
+                  <input class="viz-number" type="number" id="cfgRangeCrestN" value="-9" min="-120" max="0" step="1">
+                </div>
+              </div>
+              <div class="viz-control" id="grpPulseMode" style="display:none">
+                <label for="cfgPulseMode">脉冲模式</label>
+                <select class="viz-select" id="cfgPulseMode">
+                  <option value="peak_magnitude">峰值幅度</option>
+                  <option value="peak_frequency">峰值频率</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waveform Instances -->
+          <div class="viz-section" id="sectWaveInstances">
+            <h3>波形实例</h3>
+            <div class="viz-instance-list" id="vizInstanceList"></div>
+            <div class="viz-instance-actions-row">
+              <button class="viz-mini-btn" id="vizAddInstance" type="button">新增实例</button>
+              <button class="viz-mini-btn" id="vizDelInstance" type="button" style="display:none">删除选中</button>
+            </div>
+            <div class="viz-instance-props" id="vizInstanceProps" style="display:none">
+              <div class="viz-grid two-col">
+                <div class="viz-control">
+                  <label for="cfgInstX">水平位置 <span class="viz-unit">px</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgInstX" min="-1600" max="1600" value="0" step="1">
+                    <input class="viz-number" type="number" id="cfgInstXN" value="0" min="-1600" max="1600" step="1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgInstY">垂直位置 <span class="viz-unit">px</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgInstY" min="-1200" max="1200" value="0" step="1">
+                    <input class="viz-number" type="number" id="cfgInstYN" value="0" min="-1200" max="1200" step="1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgInstScaleX">水平缩放 <span class="viz-unit">%</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgInstScaleX" min="10" max="400" value="100" step="1">
+                    <input class="viz-number" type="number" id="cfgInstScaleXN" value="100" min="10" max="400" step="1">
+                  </div>
+                </div>
+                <div class="viz-control">
+                  <label for="cfgInstScaleY">垂直缩放 <span class="viz-unit">%</span></label>
+                  <div class="viz-dual">
+                    <input class="viz-slider" type="range" id="cfgInstScaleY" min="10" max="400" value="100" step="1">
+                    <input class="viz-number" type="number" id="cfgInstScaleYN" value="100" min="10" max="400" step="1">
+                  </div>
+                </div>
+              </div>
+              <div class="viz-instance-actions-row" style="margin-top:8px">
+                <button class="viz-mini-btn" id="vizFlipH" type="button">水平翻转</button>
+                <button class="viz-mini-btn" id="vizFlipV" type="button">垂直翻转</button>
+                <button class="viz-mini-btn" id="vizCenter" type="button">居中复位</button>
+              </div>
+              <div class="viz-check-item" style="margin-top:10px">
+                <input type="checkbox" id="cfgMouseFollow">
+                <label for="cfgMouseFollow">启用鼠标跟随</label>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- .viz-settings-scroll -->
+
+        <div class="viz-settings-footer">
+          <% if (user.role === 'admin') { %>
+          <button class="viz-preset-btn" id="vizSaveDefaults" type="button">保存为默认</button>
+          <% } %>
+        </div>
+        </div><!-- .viz-settings-body -->
+      </div><!-- .viz-settings -->
+    </div><!-- .viz-layout -->
+  </div><!-- #panel-visualizer -->
+
+<!-- ============== PANEL: MYSPACE ============== -->
   <div class="app-panel" id="panel-myspace">
     <main class="page-container myspace-page">
       <section class="profile-hero panel-card glass-panel">
         <div class="profile-identity">
           <div class="avatar neon-ring"><%= (user.nickname || user.username).charAt(0).toUpperCase() %></div>
           <div class="profile-main-copy">
-            <span class="eyebrow" data-blur-text="chars">CREATOR PROFILE</span>
-            <h1 class="profile-name" data-blur-text="words"><%= user.nickname || user.username %></h1>
+            <span class="eyebrow" data-edit-key="myspaceEyebrow"><%= (pageContent.myspace && pageContent.myspace.myspaceEyebrow) || 'CREATOR PROFILE' %></span>
+            <h1 class="profile-name" id="displayNickname"><%= user.nickname || user.username %></h1>
             <p class="profile-account">账号：<%= user.username %></p>
-            <p class="profile-description" data-blur-text="words">这是你的沉浸式创作者首页，作品、收藏和最近播放都在同一空间里流动。</p>
-            <div class="profile-badges">
-              <span><%= user.role === 'admin' ? '管理员 / 策展人' : '社区听众 / 收藏者' %></span>
-              <span><%= profileMetrics.favoriteArtists %> 位偏爱音乐人</span>
-              <span><%= collectCount %> 首长期收藏</span>
-            </div>
+            <p class="profile-description" id="displaySignature"><%= user.signature || '还没有个性签名，点击编辑来写一句话吧。' %></p>
           </div>
-        </div>
-        <div class="profile-stat-grid">
-          <article><strong><%= collectCount %></strong><span>收藏作品</span></article>
-          <article><strong><%= uploadCount %></strong><span>上传作品</span></article>
-          <article><strong><%= profileMetrics.totalCollectedPlays %></strong><span>收藏曲目累计播放</span></article>
-          <article><strong><%= profileMetrics.totalUploadPlays %></strong><span>上传曲目累计播放</span></article>
+          <button class="profile-edit-btn" id="toggleEditBtn" type="button" title="编辑个人资料">编辑</button>
         </div>
       </section>
+
+      <!-- profile edit form (hidden by default) -->
+      <section class="panel-card glass-panel profile-edit-panel" id="profileEditPanel" style="display:none">
+        <h2 class="section-title">编辑个人资料</h2>
+        <div class="form-stack profile-edit-form">
+          <div class="field-group">
+            <label class="field-label" for="editNickname">显示名称</label>
+            <input id="editNickname" class="field-input" type="text" maxlength="50" placeholder="输入你的显示名称" value="<%= user.nickname || '' %>">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="editSignature">个性签名</label>
+            <textarea id="editSignature" class="field-input field-textarea" maxlength="200" placeholder="写一句话介绍自己..." rows="3"><%= user.signature || '' %></textarea>
+          </div>
+          <div class="profile-edit-actions">
+            <button class="btn btn-primary btn-glow" id="saveProfileBtn" type="button">保存</button>
+            <button class="btn btn-secondary" id="cancelEditBtn" type="button">取消</button>
+          </div>
+        </div>
+      </section>
+
       <section class="profile-content panel-card glass-panel">
         <div class="tabs" role="tablist">
-          <button class="tab active" type="button" data-tab="collect">我的收藏</button>
-          <% if (user.role === 'admin') { %><button class="tab" type="button" data-tab="upload">我的上传</button><% } %>
-          <button class="tab" type="button" data-tab="history">播放历史</button>
+          <button class="tab active" role="tab" type="button" data-tab="collect">收藏声场</button>
+          <% if (user.role === 'admin') { %>
+          <button class="tab" role="tab" type="button" data-tab="upload">作品管理</button>
+          <% } %>
+          <button class="tab" role="tab" type="button" data-tab="history">播放历史</button>
         </div>
         <div class="tab-content active" id="collectContent">
-          <div class="section-toolbar"><h2 class="section-title heading-no-margin" data-scroll-float data-scroll-stagger="0.025">收藏声场</h2><div class="chip-row" id="collectSingerFilters"></div></div>
+          <div class="section-toolbar"><h2 class="section-title heading-no-margin">收藏声场 · <%= collectCount %> 首</h2><div class="chip-row" id="collectSingerFilters"></div></div>
           <div class="music-grid compact-grid" id="collectGrid">
             <% if (collectList && collectList.length > 0) { %>
               <% for(let item of collectList) { %>
@@ -177,7 +696,6 @@
                     <div class="music-card-topline"><span class="pill">已收藏</span><span class="meta-light"><%= item.play_count || 0 %> 次播放</span></div>
                     <h3 class="music-card-title"><%= item.song_name %></h3>
                     <p class="music-card-subtitle"><%= item.singer %></p>
-                    <p class="music-card-uploader">上传者：<%= item.uploader_name %></p>
                     <div class="music-card-actions">
                       <button class="btn btn-primary btn-compact play-btn" type="button" data-src="<%= item.mp3_path %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>">播放</button>
                       <button class="btn btn-warning btn-compact uncollect-btn" type="button" data-id="<%= item.id %>">取消收藏</button>
@@ -191,7 +709,7 @@
         </div>
         <% if (user.role === 'admin') { %>
           <div class="tab-content" id="uploadContent">
-            <div class="section-toolbar"><h2 class="section-title heading-no-margin" data-scroll-float data-scroll-stagger="0.025">作品管理</h2><span class="toolbar-hint">你上传的曲目将在这里集中管理</span></div>
+            <div class="section-toolbar"><h2 class="section-title heading-no-margin">作品管理</h2><span class="toolbar-hint">你上传的曲目会在这里集中管理</span></div>
             <div class="music-grid compact-grid" id="uploadGrid">
               <% if (uploadList && uploadList.length > 0) { %>
                 <% for(let item of uploadList) { %>
@@ -201,7 +719,6 @@
                       <div class="music-card-topline"><span class="pill">我的作品</span><span class="meta-light"><span class="play-count-text"><%= item.play_count || 0 %></span> 次播放</span></div>
                       <h3 class="music-card-title"><%= item.song_name %></h3>
                       <p class="music-card-subtitle"><%= item.singer %></p>
-                      <p class="music-card-uploader">上传者：<%= item.uploader_name %></p>
                       <div class="music-card-actions">
                         <button class="btn btn-primary btn-compact play-btn" type="button" data-src="<%= item.mp3_path %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>">播放</button>
                         <button class="btn btn-danger btn-compact delete-music-btn" type="button" data-id="<%= item.id %>">删除歌曲</button>
@@ -215,7 +732,7 @@
           </div>
         <% } %>
         <div class="tab-content" id="historyContent">
-          <div class="section-toolbar"><h2 class="section-title heading-no-margin" data-scroll-float data-scroll-stagger="0.025">播放历史</h2><span class="toolbar-hint">基于本地设备最近播放记录生成</span></div>
+          <div class="section-toolbar"><h2 class="section-title heading-no-margin">播放历史</h2><span class="toolbar-hint">基于本地设备最近播放记录生成</span></div>
           <div class="history-grid" id="historyGrid"></div>
           <div class="empty-state" id="historyEmptyState">还没有播放历史，先回首页播放一首歌吧。</div>
         </div>
@@ -223,32 +740,40 @@
     </main>
   </div>
 
-  <!-- ============== PANEL: UPLOAD ============== -->
+  <!-- ============== PANEL: UPLOAD (admin only) ============== -->
+  <% if (user.role === 'admin') { %>
   <div class="app-panel" id="panel-upload">
     <main class="upload-layout center-shell">
       <section class="upload-intro">
-        <span class="eyebrow" data-blur-text="chars">CREATOR STATION</span>
-        <h1 data-blur-text="words">把新的旋律上传到社区，把封面、情绪和氛围一起交给听众。</h1>
-        <p data-blur-text="words">上传页升级为更明确的创作台体验，适配移动端和桌面端创作者操作。</p>
-        <div class="upload-notes"><span>支持音频与封面双文件上传</span><span>视觉与表单状态统一</span><span>为后续 Figma 设计映射保留规范</span></div>
+        <span class="eyebrow">CREATOR STATION</span>
+        <h1>上传你的原创歌曲，让更多人听到你的声音。</h1>
+        <p>支持 MP3 音频上传，请确保你拥有歌曲版权或已获得授权。</p>
+        <div class="upload-notes"><span>文件大小建议 10MB 以内</span><span>仅支持 MP3 格式</span><span>封面建议 1:1 比例</span></div>
       </section>
       <section class="panel-card upload-card deluxe-card">
-        <h2 class="upload-title brand-title">管理员上传音乐</h2>
-        <p class="upload-subtitle">请填写歌曲信息并上传对应资源</p>
+        <h2 class="upload-title brand-title">发布新曲目</h2>
+        <p class="upload-subtitle">填写歌曲信息并上传音频文件和封面图片</p>
         <form action="/api/upload" method="POST" enctype="multipart/form-data" class="form-stack upload-form-grid">
-          <div class="field-group"><label class="field-label" for="song-name">歌曲名称</label><input id="song-name" class="field-input" type="text" name="song_name" placeholder="请输入歌曲名" required></div>
-          <div class="field-group"><label class="field-label" for="singer-name">歌手</label><input id="singer-name" class="field-input" type="text" name="singer" placeholder="请输入歌手名" required></div>
+          <div class="field-group"><label class="field-label" for="song-name">歌曲名称</label><input id="song-name" class="field-input" type="text" name="song_name" placeholder="请输入歌曲名称" required></div>
+          <div class="field-group"><label class="field-label" for="singer-name">歌手名称</label><input id="singer-name" class="field-input" type="text" name="singer" placeholder="请输入歌手名称" required></div>
           <div class="field-group"><label class="field-label" for="cover-file">封面图片</label><input id="cover-file" class="field-input file-input" type="file" name="cover" accept="image/*" required></div>
-          <div class="field-group"><label class="field-label" for="music-file">音乐文件（mp3）</label><input id="music-file" class="field-input file-input" type="file" name="music" accept="audio/mpeg" required></div>
-          <button type="submit" class="btn btn-primary upload-submit btn-glow">确认上传</button>
+          <div class="field-group"><label class="field-label" for="music-file">音频文件 (MP3)</label><input id="music-file" class="field-input file-input" type="file" name="music" accept="audio/mpeg" required></div>
+          <button type="submit" class="btn btn-primary upload-submit btn-glow">发布歌曲</button>
         </form>
-        <a href="/app?page=home" class="upload-back-link" data-page>返回主页</a>
+        <a href="/app?page=home" class="upload-back-link" data-page>-> 返回首页</a>
       </section>
     </main>
   </div>
+  <% } %>
+
+  </div><!-- .panel-track -->
+  </div><!-- .panel-stage -->
 
   <!-- ============== PERSISTENT PLAYER ============== -->
   <section class="player-shell">
+    <button class="player-toggle" id="playerToggleBtn" title="收起播放器">
+      <span class="player-toggle-icon">▾</span>
+    </button>
     <div class="player-card glass-panel">
       <div class="player-cover-frame neon-ring">
         <img id="playerCover" src="<%= featuredTrack ? featuredTrack.cover_path : '/favicon.ico' %>" alt="当前播放封面">
@@ -276,7 +801,7 @@
           </div>
         </div>
       </div>
-      <button class="icon-btn" id="playlistBtn" type="button"><img src="/images/List.svg" alt="播放列表"></button>
+      <button class="icon-btn" id="playlistBtn" type="button"><img src="/images/List.svg" alt="歌曲列表"></button>
     </div>
     <div class="playlist-panel" id="playlistPanel"></div>
   </section>
@@ -286,15 +811,27 @@
     window.__STAR_MUSIC_HOME__ = {
       userId: <%= user.id %>,
       initialMode: 'sequence',
-      currentPage: '<%= currentPage %>'
+      currentPage: '<%= currentPage %>',
+      userRole: '<%= user.role %>'
     };
   </script>
+  <script src="/js/physics-scroll.js"></script>
+  <script src="/js/magic-rings.js"></script>
+  <script src="/js/visualizer-waveform.js"></script>
+  <script src="/js/visualizer-controls.js"></script>
   <script src="/js/gradual-blur.js"></script>
-  <script src="/js/blur-text.js"></script>
-  <script src="/js/scroll-float.js"></script>
   <script src="/js/card-nav.js"></script>
   <script src="/js/home.js"></script>
   <script src="/js/myspace.js"></script>
   <script src="/js/app-switcher.js"></script>
+  <% if (user.role === 'admin') { %>
+  <script src="/js/admin-console.js"></script>
+  <script>
+    document.getElementById('adminConsoleBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.__adminConsole) window.__adminConsole.toggle();
+    });
+  </script>
+  <% } %>
 </body>
 </html>

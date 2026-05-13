@@ -1,0 +1,444 @@
+/* ═══════════════════════════════════════════════
+   Panel-level flex container — constrain to viewport
+   ═══════════════════════════════════════════════ */
+
+#panel-visualizer {
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.viz-layout {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.viz-settings {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 430px;
+  max-width: 90vw;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: 26px 0 0 26px;
+  background: rgba(8, 14, 26, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  transition: width 350ms cubic-bezier(0.22, 0.87, 0.42, 1);
+}
+
+.viz-stage-card {
+  position: absolute;
+  inset: 22px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.viz-settings-header,
+.viz-settings-actions,
+.viz-color-row,
+.viz-inline-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.viz-settings-subtitle,
+.viz-inline-help,
+.viz-input-hint {
+  color: var(--color-text-subtle);
+  font-size: 0.88rem;
+}
+
+.viz-settings-header {
+  justify-content: space-between;
+}
+
+.viz-preset-btn,
+.viz-mini-btn {
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+.viz-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 50%, rgba(124, 92, 255, 0.12), rgba(7, 11, 22, 0.2) 52%, rgba(7, 11, 22, 0.88) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.viz-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(25, 211, 255, 0.12), transparent 26%), radial-gradient(circle at 70% 70%, rgba(255, 95, 162, 0.12), transparent 32%);
+  pointer-events: none;
+}
+
+.viz-stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.viz-stage-placeholder {
+  position: absolute;
+  inset: auto 18px 18px 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(6, 10, 19, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+  pointer-events: none;
+}
+
+.viz-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(25, 211, 255, 0.12);
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+}
+
+.viz-settings-scroll {
+  margin-top: 16px;
+  padding-right: 6px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.viz-section {
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.viz-section h3 {
+  margin-bottom: 14px;
+  font-size: 0.95rem;
+}
+
+.viz-grid,
+.viz-row {
+  display: grid;
+  gap: 12px;
+}
+
+.viz-grid.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.viz-grid.one-col {
+  grid-template-columns: 1fr;
+}
+
+.viz-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viz-control label,
+.viz-toggle-label {
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}
+
+.viz-dual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 8px;
+  align-items: center;
+}
+
+.viz-slider {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  outline: none;
+}
+
+.viz-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cff, #19d3ff);
+  border: 0;
+  box-shadow: 0 0 14px rgba(124, 92, 255, 0.45);
+}
+
+.viz-number,
+.viz-select,
+.viz-text,
+.viz-color-hex {
+  min-height: 42px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+.viz-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.viz-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.viz-check-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: #7c5cff;
+}
+
+.viz-color-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 8px;
+  align-items: center;
+}
+
+.viz-color-picker {
+  width: 58px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: transparent;
+  padding: 0;
+}
+
+.viz-settings-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1180px) {
+  #panel-visualizer {
+    overflow-y: auto;
+  }
+
+  .viz-layout {
+    position: static;
+    flex: auto;
+    min-height: auto;
+  }
+
+  .viz-stage-card {
+    position: static;
+    gap: 18px;
+  }
+
+  .viz-stage {
+    position: relative;
+    flex: 1;
+    min-height: 360px;
+  }
+
+  .viz-settings {
+    position: static;
+    width: auto;
+    max-width: none;
+    border-radius: 26px;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Settings Panel Collapse/Expand
+   ═══════════════════════════════════════════════ */
+
+.viz-settings-toggle {
+  position: absolute;
+  left: 6px;
+  top: 22px;
+  bottom: 22px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 36px;
+  padding: 10px 4px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(124, 92, 255, 0.07);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 200ms, color 200ms;
+}
+
+.viz-settings-toggle:hover {
+  background: rgba(124, 92, 255, 0.18);
+  color: var(--color-text);
+}
+
+.viz-settings-toggle svg {
+  flex-shrink: 0;
+  transition: transform 350ms cubic-bezier(0.22, 0.87, 0.42, 1);
+}
+
+.viz-toggle-label {
+  writing-mode: vertical-rl;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.viz-settings-body {
+  padding-left: 52px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  transition: opacity 280ms, visibility 280ms;
+}
+
+/* Collapsed state */
+
+.viz-settings--collapsed {
+  width: 44px;
+  overflow: hidden;
+  padding: 22px 0;
+  border-radius: 26px 0 0 26px;
+}
+
+.viz-settings--collapsed .viz-settings-body {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.viz-settings--collapsed .viz-settings-toggle {
+  left: 4px;
+  right: 4px;
+  width: auto;
+  border-radius: 10px;
+  background: rgba(124, 92, 255, 0.13);
+}
+
+.viz-settings--collapsed .viz-settings-toggle svg {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 1180px) {
+  .viz-settings--collapsed {
+    width: auto;
+    overflow: visible;
+    border-radius: 26px;
+  }
+
+  .viz-settings--collapsed .viz-settings-body {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .viz-settings-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .viz-grid.two-col,
+  .viz-check-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .viz-dual,
+  .viz-color-control {
+    grid-template-columns: 1fr;
+  }
+
+  .viz-stage {
+    min-height: 360px;
+  }
+}
+
+.viz-instance-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.viz-instance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 160ms, border-color 160ms;
+}
+
+.viz-instance-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.viz-instance-chip.active {
+  border-color: rgba(124, 92, 255, 0.6);
+  background: rgba(124, 92, 255, 0.12);
+  color: var(--color-text);
+}
+
+.viz-instance-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.viz-instance-props {
+  margin-top: 10px;
+}

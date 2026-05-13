@@ -1,0 +1,99 @@
+<!-- ============== PANEL: VISUALIZER ============== -->
+  <div class="app-panel app-panel-viz" id="panel-visualizer">
+    <div class="viz-panels-wrap">
+      <div class="viz-stage" id="vizStage">
+        <canvas id="visualizerCanvas" class="visualizer-canvas" aria-hidden="true"></canvas>
+      </div>
+      <div class="viz-settings" id="vizSettings">
+        <div class="viz-settings-header">
+          <h2 class="section-title">音波设置</h2>
+          <span class="viz-admin-badge" id="vizAdminBadge" style="display:none">管理员模式</span>
+        </div>
+        <div class="viz-settings-scroll">
+          <div class="viz-section"><h3>显示模式</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">显示模式</label><select class="field-input viz-select" id="cfgDisplayMode"><option value="curve">曲形</option><option value="bars">条形</option><option value="stepped_bars">阶梯式条形</option><option value="level_meter">液压形</option><option value="stepped_level_meter">阶梯式液压形</option><option value="waveform">波形(实验)</option></select></div>
+            <div class="field-group"><label class="field-label">渲染模式</label><select class="field-input viz-select" id="cfgRenderMode"><option value="line">线条</option><option value="solid">固实</option><option value="gradient">渐变</option><option value="pulse">脉冲</option><option value="range">范围</option></select></div>
+            <div class="field-group"><label class="field-label">声道模式</label><select class="field-input viz-select" id="cfgChannelMode"><option value="mono">单声道</option><option value="stereo">立体声</option></select></div>
+            <div class="field-group" id="grpPulseMode"><label class="field-label">脉冲模式</label><select class="field-input viz-select" id="cfgPulseMode"><option value="peak_magnitude">峰值幅度</option><option value="peak_frequency">峰值频率</option></select></div>
+          </div></div>
+
+          <div class="viz-section"><h3>图形尺寸</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">宽度<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgWidthN" min="32" max="3840" value="800"><input class="field-input viz-slider" type="range" id="cfgWidth" min="32" max="3840" value="800" step="1"></div></div>
+            <div class="field-group"><label class="field-label">高度<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgHeightN" min="32" max="2160" value="225"><input class="field-input viz-slider" type="range" id="cfgHeight" min="32" max="2160" value="225" step="1"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>条形/阶梯参数</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">条形宽度<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgBarWidthN" min="1" max="256" value="24"><input class="field-input viz-slider" type="range" id="cfgBarWidth" min="1" max="256" value="24" step="1"></div></div>
+            <div class="field-group"><label class="field-label">条形间隔<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgBarGapN" min="0" max="256" value="6"><input class="field-input viz-slider" type="range" id="cfgBarGap" min="0" max="256" value="6" step="1"></div></div>
+            <div class="field-group"><label class="field-label">阶梯宽度<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgStepWidthN" min="1" max="256" value="8"><input class="field-input viz-slider" type="range" id="cfgStepWidth" min="1" max="256" value="8" step="1"></div></div>
+            <div class="field-group"><label class="field-label">阶梯间隔<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgStepGapN" min="0" max="256" value="4"><input class="field-input viz-slider" type="range" id="cfgStepGap" min="0" max="256" value="4" step="1"></div></div>
+            <div class="field-group"><label class="field-label">最低条形高度<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgMinBarHN" min="0" max="1080" value="0"><input class="field-input viz-slider" type="range" id="cfgMinBarH" min="0" max="1080" value="0" step="1"></div></div>
+            <div class="field-group"><label class="field-label">圆角</label><input class="field-input" type="checkbox" id="cfgRoundedCaps"></div>
+          </div></div>
+
+          <div class="viz-section"><h3>坐标轴 & 布局</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">对数频率表</label><input class="field-input" type="checkbox" id="cfgLogScale" checked></div>
+            <div class="field-group"><label class="field-label">镜像频率轴</label><input class="field-input" type="checkbox" id="cfgMirrorFreq"></div>
+            <div class="field-group"><label class="field-label">放射状布局</label><input class="field-input" type="checkbox" id="cfgRadialLayout"></div>
+            <div class="field-group" id="grpRadialInv"><label class="field-label">反转放射方向</label><input class="field-input" type="checkbox" id="cfgRadialInvert"></div>
+          </div></div>
+
+          <div class="viz-section" id="sectRadial"><h3>径向参数</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">盲区<span class="viz-unit">%</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgDeadzoneN" min="0" max="100" step="0.1" value="20"><input class="field-input viz-slider" type="range" id="cfgDeadzone" min="0" max="100" value="20" step="0.1"></div></div>
+            <div class="field-group"><label class="field-label">放射弧度<span class="viz-unit">°</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRadialArcN" min="0" max="360" step="0.1" value="360"><input class="field-input viz-slider" type="range" id="cfgRadialArc" min="0" max="360" value="360" step="0.1"></div></div>
+            <div class="field-group"><label class="field-label">放射旋转<span class="viz-unit">°</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRadialRotN" min="0" max="360" step="0.1" value="0"><input class="field-input viz-slider" type="range" id="cfgRadialRot" min="0" max="360" value="0" step="0.1"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>FFT 频谱</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">FFT大小</label><select class="field-input viz-select" id="cfgFftSize"><option value="256">256</option><option value="512">512</option><option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option><option value="8192">8192</option><option value="16384">16384</option><option value="32768">32768</option><option value="65536">65536</option></select></div>
+            <div class="field-group"><label class="field-label">窗函数</label><select class="field-input viz-select" id="cfgWindow"><option value="hann">海宁</option><option value="hamming">汉明</option><option value="blackman">布莱克曼</option><option value="blackman_harris">布莱克曼-哈里斯</option><option value="power_of_sine">正弦幂</option></select></div>
+            <div class="field-group"><label class="field-label">插值模式</label><select class="field-input viz-select" id="cfgInterp"><option value="catmull_rom">立方(卡特姆-罗姆)</option><option value="lanczos">兰佐斯</option><option value="point">最近邻</option></select></div>
+            <div class="field-group"><label class="field-label">滤波模式</label><select class="field-input viz-select" id="cfgFilterMode"><option value="none">无</option><option value="gauss">高斯</option></select></div>
+          </div></div>
+
+          <div class="viz-section" id="sectFilter"><h3>滤波参数</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">过滤半径</label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgFilterRadiusN" min="0" max="32" step="0.01" value="1.5"><input class="field-input viz-slider" type="range" id="cfgFilterRadius" min="0" max="32" value="1.5" step="0.01"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>频率范围 & dB</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">低频过滤<span class="viz-unit">Hz</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgCutoffLowN" min="0" max="24000" value="30"><input class="field-input viz-slider" type="range" id="cfgCutoffLow" min="0" max="24000" value="30" step="1"></div></div>
+            <div class="field-group"><label class="field-label">高频过滤<span class="viz-unit">Hz</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgCutoffHighN" min="0" max="24000" value="17500"><input class="field-input viz-slider" type="range" id="cfgCutoffHigh" min="0" max="24000" value="17500" step="1"></div></div>
+            <div class="field-group"><label class="field-label">最小分贝<span class="viz-unit">dBFS</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgFloorN" min="-120" max="0" value="-65"><input class="field-input viz-slider" type="range" id="cfgFloor" min="-120" max="0" value="-65" step="1"></div></div>
+            <div class="field-group"><label class="field-label">最大分贝<span class="viz-unit">dBFS</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgCeilingN" min="-120" max="0" value="0"><input class="field-input viz-slider" type="range" id="cfgCeiling" min="-120" max="0" value="0" step="1"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>斜率 & 滚降</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">斜度</label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgSlopeN" min="0" max="10" step="0.01" value="0"><input class="field-input viz-slider" type="range" id="cfgSlope" min="0" max="10" value="0" step="0.01"></div></div>
+            <div class="field-group"><label class="field-label">滚降带宽<span class="viz-unit">倍频程</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRolloffQN" min="0" max="10" step="0.01" value="0"><input class="field-input viz-slider" type="range" id="cfgRolloffQ" min="0" max="10" value="0" step="0.01"></div></div>
+            <div class="field-group"><label class="field-label">滚降率<span class="viz-unit">dB/oct</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRolloffRateN" min="0" max="65" step="0.01" value="0"><input class="field-input viz-slider" type="range" id="cfgRolloffRate" min="0" max="65" value="0" step="0.01"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>时间平滑</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">时间平滑</label><select class="field-input viz-select" id="cfgSmooth"><option value="exp_moving_avg">简单指数加权法</option><option value="tv_exp_moving_avg">时间变体指数加权法</option><option value="none">无</option></select></div>
+            <div class="field-group" id="grpGravity"><label class="field-label">惯性<span class="viz-unit">gravity</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgGravityN" min="0" max="1" step="0.01" value="0.65"><input class="field-input viz-slider" type="range" id="cfgGravity" min="0" max="1" value="0.65" step="0.01"></div></div>
+            <div class="field-group" id="grpFastPeaks"><label class="field-label">快速峰值</label><input class="field-input" type="checkbox" id="cfgFastPeaks"></div>
+          </div></div>
+
+          <div class="viz-section"><h3>颜色 (RGBA Hex)</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">底端颜色</label><input class="field-input" type="text" id="cfgColorBase" value="#FFFFFFFF" maxlength="9"></div>
+            <div class="field-group" id="grpColorCrest"><label class="field-label">顶端颜色</label><input class="field-input" type="text" id="cfgColorCrest" value="#FFFFFFFF" maxlength="9"></div>
+            <div class="field-group" id="grpColorMiddle"><label class="field-label">中间颜色</label><input class="field-input" type="text" id="cfgColorMiddle" value="#FFFFFFFF" maxlength="9"></div>
+            <div class="field-group"><label class="field-label">渐变比值</label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgGradRatioN" min="0" max="4" step="0.01" value="0.75"><input class="field-input viz-slider" type="range" id="cfgGradRatio" min="0" max="4" value="0.75" step="0.01"></div></div>
+          </div></div>
+
+          <div class="viz-section" id="sectRange"><h3>范围参数</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">中间范围<span class="viz-unit">dBFS</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRangeMidN" min="-120" max="0" value="-20"><input class="field-input viz-slider" type="range" id="cfgRangeMid" min="-120" max="0" value="-20" step="1"></div></div>
+            <div class="field-group"><label class="field-label">波峰范围<span class="viz-unit">dBFS</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgRangeCrestN" min="-120" max="0" value="-9"><input class="field-input viz-slider" type="range" id="cfgRangeCrest" min="-120" max="0" value="-9" step="1"></div></div>
+          </div></div>
+
+          <div class="viz-section"><h3>声道间距</h3><div class="viz-row">
+            <div class="field-group"><label class="field-label">声道间距<span class="viz-unit">px</span></label><div class="viz-dual"><input class="field-input viz-number" type="number" id="cfgChSpacingN" min="0" max="2160" value="0"><input class="field-input viz-slider" type="range" id="cfgChSpacing" min="0" max="2160" value="0" step="1"></div></div>
+          </div></div>
+
+          <div class="viz-settings-footer">
+            <button class="btn btn-primary btn-glow" id="vizSaveDefaults" type="button" style="display:none">保存为默认</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

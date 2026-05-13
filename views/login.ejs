@@ -31,6 +31,9 @@
     <section class="panel-card form-card auth-card deluxe-card">
       <h2 class="form-title brand-title">小星音吧</h2>
       <p class="form-subtitle">请登录后继续探索独立音乐宇宙</p>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="auth-error"><%= error %></div>
+      <% } %>
       <form action="/api/login" method="POST" class="form-stack">
         <div class="field-group">
           <label class="field-label" for="login-username">账号</label>

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 function requireLogin(req, res, next) {
   const token = req.cookies.token;
   if (!token) {
-    return res.redirect('/login');
+    return res.redirect('/?auth=login');
   }
 
   try {
@@ -12,8 +12,20 @@ function requireLogin(req, res, next) {
     next();
   } catch (err) {
     res.clearCookie('token');
-    res.redirect('/login');
+    res.redirect('/?auth=login');
   }
+}
+
+function detectLogin(req, res, next) {
+  const token = req.cookies.token;
+  if (token) {
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      res.clearCookie('token');
+    }
+  }
+  next();
 }
 
 function requireAdmin(req, res, next) {
@@ -26,5 +38,6 @@ function requireAdmin(req, res, next) {
 
 module.exports = {
   requireLogin,
+  detectLogin,
   requireAdmin
 };

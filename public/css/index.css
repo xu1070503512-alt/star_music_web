@@ -1,11 +1,152 @@
 body.page-shell {
-  padding-bottom: 130px;
+  overflow: hidden;
 }
 
+/* ═══════════════════════════════════════════════
+   Magic Rings — always-on background
+   ═══════════════════════════════════════════════ */
+
+#magicRingsContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.38;
+}
+
+#magicRingsContainer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ═══════════════════════════════════════════════
+   Panel Stage — physics scroll (translateY)
+   ═══════════════════════════════════════════════ */
+
+.panel-stage {
+  position: relative;
+  touch-action: none;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   Panel Track — horizontal page strip (translateX)
+   ═══════════════════════════════════════════════ */
+
+.panel-track {
+  display: flex;
+  width: 100%;
+  transition: transform 450ms cubic-bezier(0.22, 0.87, 0.42, 1);
+}
+
+/* ── Each panel: full-width tile in the strip ── */
 .app-panel {
-  display: none;
+  flex: 0 0 100%;
+  width: 100%;
+  padding-top: 80px;
+  padding-bottom: 140px;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
+body.player-is-collapsed .app-panel {
+  padding-bottom: 48px;
+  transition: padding-bottom 0.38s cubic-bezier(0.32, 0.94, 0.60, 1);
+}
+
+/* ── Content stagger ── */
+.app-panel.panel-content-in > main > * {
+  animation: cubeContentLine 480ms cubic-bezier(0.32, 0.94, 0.60, 1) both;
+}
+
+.app-panel.panel-content-in > main > *:nth-child(1) { animation-delay: 0ms; }
+.app-panel.panel-content-in > main > *:nth-child(2) { animation-delay: 45ms; }
+.app-panel.panel-content-in > main > *:nth-child(3) { animation-delay: 90ms; }
+.app-panel.panel-content-in > main > *:nth-child(4) { animation-delay: 135ms; }
+.app-panel.panel-content-in > main > *:nth-child(5) { animation-delay: 180ms; }
+
+@keyframes cubeContentLine {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Canvas when in visualizer panel -- see visualizer-panel.css for layout */
+
+/* ═══════════════════════════════════════════════
+   Magic Rings — always-on background
+   ═══════════════════════════════════════════════ */
+
+#magicRingsContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.38;
+}
+
+#magicRingsContainer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ═══════════════════════════════════════════════
+   Panel Stage — physics scroll (translateY)
+   ═══════════════════════════════════════════════ */
+
+.panel-stage {
+  position: relative;
+  touch-action: none;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   Panel Track — horizontal page strip (translateX)
+   ═══════════════════════════════════════════════ */
+
+.panel-track {
+  display: flex;
+  width: 100%;
+  transition: transform 450ms cubic-bezier(0.22, 0.87, 0.42, 1);
+}
+
+/* ── Each panel: full-width tile in the strip ── */
+.app-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  padding-top: 80px;
+  padding-bottom: 140px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+body.player-is-collapsed .app-panel {
+  padding-bottom: 48px;
+  transition: padding-bottom 0.38s cubic-bezier(0.32, 0.94, 0.60, 1);
+}
+
+/* ── Content stagger ── */
+.app-panel.panel-content-in > main > * {
+  animation: cubeContentLine 480ms cubic-bezier(0.32, 0.94, 0.60, 1) both;
+}
+
+.app-panel.panel-content-in > main > *:nth-child(1) { animation-delay: 0ms; }
+.app-panel.panel-content-in > main > *:nth-child(2) { animation-delay: 45ms; }
+.app-panel.panel-content-in > main > *:nth-child(3) { animation-delay: 90ms; }
+.app-panel.panel-content-in > main > *:nth-child(4) { animation-delay: 135ms; }
+.app-panel.panel-content-in > main > *:nth-child(5) { animation-delay: 180ms; }
+
+@keyframes cubeContentLine {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Visualizer panel — styled via visualizer-panel.css */
+
+/* ── App Navigation Arrows ── */
 .app-nav-arrow {
   position: fixed;
   top: 50%;
@@ -33,6 +174,10 @@ body.page-shell {
   color: #fff;
   transform: translateY(-50%) scale(1.15);
   border-color: rgba(124, 92, 255, 0.4);
+}
+
+.app-nav-arrow:active {
+  transform: translateY(-50%) scale(0.92);
 }
 
 .app-nav-left  { left: 12px; }

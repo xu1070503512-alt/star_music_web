@@ -2,47 +2,75 @@
   var panels = document.querySelectorAll('.app-panel');
   if (!panels.length) return;
 
-  var currentPage = (window.__STAR_MUSIC_HOME__ && window.__STAR_MUSIC_HOME__.currentPage) || 'home';
-  var visualizerCanvas = document.getElementById('visualizerCanvas');
+  var ctx = window.__STAR_MUSIC_HOME__ || {};
+  var isAdmin = ctx.userRole === 'admin';
+  var currentPage = ctx.currentPage || 'home';
   var homePanel = document.getElementById('panel-home');
+  var vizPanel = document.getElementById('panel-visualizer');
   var myspacePanel = document.getElementById('panel-myspace');
   var uploadPanel = document.getElementById('panel-upload');
-  var playerShell = document.querySelector('.player-shell');
+  var track = document.querySelector('.panel-track');
 
-  var pageToPanel = { home: homePanel, myspace: myspacePanel, upload: uploadPanel };
-  var pageOrder = ['home', 'myspace', 'upload'];
-
-  function hideAllPanels() {
-    panels.forEach(function (p) { p.style.display = 'none'; });
+  var pageToPanel = { home: homePanel, visualizer: vizPanel, myspace: myspacePanel };
+  var pageOrder = ['home', 'visualizer', 'myspace'];
+  if (isAdmin && uploadPanel) {
+    pageToPanel.upload = uploadPanel;
+    pageOrder.push('upload');
   }
 
-  function showPanel(panel) {
-    if (!panel) return;
-    panel.style.display = 'block';
+  function pageIndex(page) {
+    return pageOrder.indexOf(page);
+  }
+
+  function moveTrackTo(index) {
+    if (!track) return;
+    track.style.transform = 'translateX(' + (-index * 100) + '%)';
   }
 
   function switchToPage(page, pushState) {
     if (page === currentPage) return;
+    var newIdx = pageIndex(page);
+    if (newIdx < 0) return;
+
+    var oldPanel = pageToPanel[currentPage];
+
+    // Remove content-in from old panel so it can replay next visit
+    if (oldPanel) {
+      oldPanel.classList.remove('panel-content-in');
+      oldPanel.querySelectorAll('main > *').forEach(function (el) {
+        el.style.animation = 'none';
+      });
+    }
+
+    moveTrackTo(newIdx);
     currentPage = page;
-    hideAllPanels();
-    var panel = pageToPanel[page];
-    showPanel(panel);
-
-    if (visualizerCanvas) {
-      visualizerCanvas.style.display = (page === 'home') ? '' : 'none';
-    }
-
-    if (playerShell) {
-      playerShell.style.display = (page === 'upload') ? 'none' : '';
-    }
-
+    if (window.__STAR_MUSIC_HOME__) window.__STAR_MUSIC_HOME__.currentPage = page;
     updateArrows();
+
+    if (window.__physicsScroll) {
+      if (page === 'visualizer') {
+        window.__physicsScroll.reset();
+      } else if (oldPanel && oldPanel.id === 'panel-visualizer') {
+        window.__physicsScroll.reset();
+      }
+    }
+    if (page === 'visualizer' && window.__waveformEngine) {
+      setTimeout(function () { window.__waveformEngine.resize(); }, 150);
+    }
 
     if (pushState !== false) {
       var url = '/app?page=' + page;
-      if (window.location.search.indexOf('page=' + page) === -1) {
-        history.pushState({ page: page }, '', url);
-      }
+      history.pushState({ page: page }, '', url);
+    }
+
+    window.dispatchEvent(new CustomEvent('pageswitch', { detail: { page: page } }));
+
+    // Content stagger on the new panel
+    var newPanel = pageToPanel[page];
+    if (newPanel && !newPanel.classList.contains('panel-content-in')) {
+      setTimeout(function () {
+        newPanel.classList.add('panel-content-in');
+      }, 100);
     }
   }
 
@@ -74,13 +102,19 @@
     rightArrow.classList.toggle('disabled', false);
   }
 
-  // ── Init ────────────────────────────────────────
-  hideAllPanels();
-  showPanel(pageToPanel[currentPage] || homePanel);
-  if (visualizerCanvas && currentPage !== 'home') {
-    visualizerCanvas.style.display = 'none';
-  }
+  // ── Init ──
+  moveTrackTo(pageIndex(currentPage));
   updateArrows();
+
+  var initPanel = pageToPanel[currentPage];
+  if (initPanel) {
+    requestAnimationFrame(function () {
+      initPanel.classList.add('panel-content-in');
+    });
+    setTimeout(function () {
+      if (window.__physicsScroll) window.__physicsScroll.reset();
+    }, 150);
+  }
 
   // ── Link interception ──────────────────────────
   document.addEventListener('click', function (e) {

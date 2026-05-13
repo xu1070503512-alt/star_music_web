@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     volume: 'star-music-volume',
     mode: 'star-music-mode',
     visualizer: 'star-music-visualizer',
-    history: 'star-music-history'
+    history: 'star-music-history',
+    playerCollapsed: 'star-music-player-collapsed'
   };
 
   const audio = document.getElementById('audioPlayer');
@@ -56,13 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let visibleCards = [...cards];
   let isPlaying = false;
   let draggingProgress = false;
-  let audioContext;
-  let analyser;
-  let sourceNode;
-  let animationFrameId;
-  let visualizerEnabled = localStorage.getItem(storageKeys.visualizer) !== 'off';
   let playMode = localStorage.getItem(storageKeys.mode) || pageState.initialMode || 'sequence';
   let lastTrackedMusicId = null;
+  let pendingTrackId = null;
 
   const playlist = cards.map((card, index) => ({
     index,
@@ -70,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cover: card.dataset.cover,
     name: card.dataset.name,
     artist: card.dataset.singer,
-    uploader: card.dataset.uploader,
     src: card.dataset.src,
     playCount: Number(card.dataset.playCount || 0),
     card
@@ -118,95 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setVisualizerState(enabled) {
-    visualizerEnabled = enabled;
-    document.body.classList.toggle('is-visualizer-off', !enabled);
+    var eng = window.__waveformEngine;
+    if (enabled) {
+      document.body.classList.remove('is-visualizer-off');
+      if (eng) eng.start();
+    } else {
+      document.body.classList.add('is-visualizer-off');
+      if (eng) eng.stop();
+    }
     localStorage.setItem(storageKeys.visualizer, enabled ? 'on' : 'off');
     if (toggleVisualizerBtn) {
       toggleVisualizerBtn.textContent = enabled ? '关闭可视化' : '开启可视化';
     }
-  }
-
-  function createAudioGraph() {
-    if (audioContext || !window.AudioContext) {
-      return;
-    }
-
-    audioContext = new window.AudioContext();
-    sourceNode = audioContext.createMediaElementSource(audio);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 128;
-    analyser.smoothingTimeConstant = 0.82;
-    sourceNode.connect(analyser);
-    analyser.connect(audioContext.destination);
-  }
-
-  function resizeCanvas() {
-    const ratio = window.devicePixelRatio || 1;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    canvas.width = Math.floor(width * ratio);
-    canvas.height = Math.floor(height * ratio);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  }
-
-  function drawVisualizer() {
-    const ctx = canvas.getContext('2d');
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    ctx.clearRect(0, 0, width, height);
-
-    if (!visualizerEnabled) {
-      animationFrameId = requestAnimationFrame(drawVisualizer);
-      return;
-    }
-
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, 'rgba(87, 75, 255, 0.18)');
-    gradient.addColorStop(0.5, 'rgba(25, 211, 255, 0.12)');
-    gradient.addColorStop(1, 'rgba(255, 95, 162, 0.16)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    if (!analyser || audio.paused) {
-      animationFrameId = requestAnimationFrame(drawVisualizer);
-      return;
-    }
-
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(dataArray);
-
-    const baseY = height * 0.78;
-    const barWidth = Math.max(8, width / dataArray.length / 1.6);
-    const gap = barWidth * 0.5;
-    let x = (width - (dataArray.length * barWidth + (dataArray.length - 1) * gap)) / 2;
-
-    dataArray.forEach((value, index) => {
-      const normalized = value / 255;
-      const barHeight = Math.max(10, normalized * height * 0.18);
-      const hue = 200 + index * 2.4;
-      ctx.fillStyle = `hsla(${hue}, 90%, 68%, 0.78)`;
-      ctx.fillRect(x, baseY - barHeight, barWidth, barHeight);
-      x += barWidth + gap;
-    });
-
-    const average = dataArray.reduce((sum, item) => sum + item, 0) / dataArray.length;
-    const radius = 110 + average * 0.18;
-    const centerX = width * 0.78;
-    const centerY = height * 0.26;
-    const orb = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-    orb.addColorStop(0, 'rgba(124, 92, 255, 0.36)');
-    orb.addColorStop(0.45, 'rgba(25, 211, 255, 0.12)');
-    orb.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = orb;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    animationFrameId = requestAnimationFrame(drawVisualizer);
   }
 
   function renderPlaylist() {
@@ -219,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <img src="${track.cover}" alt="${track.name}">
         <div>
           <div class="playlist-item-name">${track.name}</div>
-          <div class="playlist-item-artist">${track.artist} · ${track.uploader}</div>
+          <div class="playlist-item-artist">${track.artist}</div>
         </div>
       </div>
     `).join('');
@@ -239,7 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
         id: track.id,
         name: track.name,
         artist: track.artist,
-        uploader: track.uploader,
         cover: track.cover,
         src: track.src,
         playedAt: Date.now()
@@ -251,11 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function trackPlayCount(track) {
-    if (!track || lastTrackedMusicId === track.id) {
+    if (!track || !track.id || audio.duration <= 0) {
       return;
     }
 
-    lastTrackedMusicId = track.id;
+    if (track.id !== pendingTrackId) {
+      return;
+    }
+
+    pendingTrackId = null;
 
     try {
       const response = await fetch('/api/track_play', {
@@ -267,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.status === 'success' && typeof result.playCount === 'number') {
         track.playCount = result.playCount;
         track.card.dataset.playCount = String(result.playCount);
-        const playCountNode = track.card.querySelector('.play-count-text');
+        var playCountNode = track.card.querySelector('.play-count-text');
         if (playCountNode) {
           playCountNode.textContent = String(result.playCount);
         }
@@ -278,31 +200,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function ensureAudioContext() {
-    createAudioGraph();
-    if (audioContext && audioContext.state === 'suspended') {
-      await audioContext.resume();
+    if (window.__waveformEngine && window.__waveformEngine.getCtx) {
+      var ctx = window.__waveformEngine.getCtx();
+      if (ctx && ctx.state === 'suspended') await ctx.resume();
     }
   }
 
   async function loadSong(index) {
-    const track = playlist[index];
+    var track = playlist[index];
     if (!track) {
       return;
     }
 
-    currentIndex = index;
+    pendingTrackId = null;
     lastTrackedMusicId = null;
+    currentIndex = index;
     audio.src = track.src;
     playerCover.src = track.cover;
     playerName.textContent = track.name;
-    playerArtist.textContent = `${track.artist} · ${track.uploader}`;
+    playerArtist.textContent = track.artist;
     writeHistory(track);
     renderPlaylist();
 
     try {
       await ensureAudioContext();
       await audio.play();
-      await trackPlayCount(track);
+      pendingTrackId = track.id;
       updatePlayState(true);
     } catch (err) {
       console.error('播放失败：', err);
@@ -366,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     visibleCards = [];
 
     workingCards.forEach((card) => {
-      const matchesKeyword = [card.dataset.name, card.dataset.singer, card.dataset.uploader]
+      const matchesKeyword = [card.dataset.name, card.dataset.singer]
         .join(' ')
         .toLowerCase()
         .includes(keyword);
@@ -472,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
   volumeBtn.addEventListener('click', () => {
     if (window.matchMedia('(max-width: 768px)').matches && volumeContainer) {
       volumeContainer.classList.toggle('is-open');
+      return;
     }
 
     if (audio.volume > 0) {
@@ -492,10 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
     var trackWrapper = elasticSlider.querySelector('.elastic-slider-track-wrapper');
     var leftIconBtn = document.getElementById('volumeBtn');
     var MAX_OVERFLOW = 50;
-    var dragging = false;
     var overflow = 0;
     var clientX = 0;
-    var region = 'middle'; // 'left' | 'middle' | 'right'
 
     function clampVolume(v) {
       return Math.max(0, Math.min(1, v));
@@ -512,36 +434,64 @@ document.addEventListener('DOMContentLoaded', () => {
       return audio.volume * 100;
     }
 
-    function setVolumeFromClientX(x) {
-      clientX = x;
+    function handlePointerMove(e) {
+      if (e.buttons <= 0) return;
+
       var rect = elasticSlider.getBoundingClientRect();
       var left = rect.left;
       var width = rect.width;
-      var right = rect.right;
-      var newOverflow;
+      var newValue = 1 - (rect.right - e.clientX) / width;
+      newValue = clampVolume(newValue);
+      audio.volume = newValue;
+      elasticFill.style.width = getRangePct() + '%';
+      syncVolumeUI();
+      clientX = e.clientX;
+      localStorage.setItem(storageKeys.volume, String(audio.volume));
+    }
 
-      if (x < left) {
+    function handlePointerDown(e) {
+      handlePointerMove(e);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    function handlePointerUp(e) {
+      var rect = elasticSlider.getBoundingClientRect();
+      var left = rect.left;
+      var right = rect.right;
+      var newOverflow = 0;
+      var region = 'middle';
+
+      if (clientX < left) {
         region = 'left';
-        newOverflow = left - x;
-      } else if (x > right) {
+        newOverflow = left - clientX;
+      } else if (clientX > right) {
         region = 'right';
-        newOverflow = x - right;
-      } else {
-        region = 'middle';
-        newOverflow = 0;
-        audio.volume = clampVolume(1 - (right - x) / width);
-        syncVolumeUI();
-        elasticFill.style.width = getRangePct() + '%';
+        newOverflow = clientX - right;
       }
 
       overflow = decay(newOverflow, MAX_OVERFLOW);
-      updateTrackTransform();
+
+      if (overflow > 0) {
+        updateTrackTransform(region);
+        requestAnimationFrame(function () {
+          overflow = 0;
+          trackWrapper.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          trackWrapper.style.transform = 'scaleX(1) scaleY(1)';
+          if (leftIconBtn) {
+            leftIconBtn.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            leftIconBtn.style.transform = 'translateX(0) scale(1)';
+          }
+          setTimeout(function () {
+            trackWrapper.style.transition = '';
+            if (leftIconBtn) leftIconBtn.style.transition = '';
+          }, 450);
+        });
+      }
     }
 
-    function updateTrackTransform() {
+    function updateTrackTransform(region) {
       if (!trackWrapper || !elasticSlider) return;
       var sliderWidth = elasticSlider.getBoundingClientRect().width;
-
       var scaleX = 1 + overflow / Math.max(sliderWidth, 1);
       var scaleY = 1 - (overflow / MAX_OVERFLOW) * 0.2;
       var originX;
@@ -552,10 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
         originX = 'left';
       }
 
+      trackWrapper.style.transition = '';
       trackWrapper.style.transform = 'scaleX(' + scaleX.toFixed(4) + ') scaleY(' + scaleY.toFixed(4) + ')';
       trackWrapper.style.transformOrigin = originX + ' center';
 
       if (leftIconBtn) {
+        leftIconBtn.style.transition = '';
         if (region === 'left') {
           leftIconBtn.style.transform = 'translateX(' + (-overflow) + 'px) scale(1.2)';
         } else {
@@ -564,39 +516,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function snapBack() {
-      overflow = 0;
-      region = 'middle';
-      trackWrapper.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      trackWrapper.style.transform = 'scaleX(1) scaleY(1)';
-      if (leftIconBtn) {
-        leftIconBtn.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        leftIconBtn.style.transform = 'translateX(0) scale(1)';
-      }
-      setTimeout(function () {
-        trackWrapper.style.transition = '';
-        if (leftIconBtn) leftIconBtn.style.transition = '';
-      }, 400);
-    }
-
-    elasticSlider.addEventListener('pointerdown', function (e) {
-      dragging = true;
-      elasticSlider.setPointerCapture(e.pointerId);
-      trackWrapper.style.transition = '';
-      if (leftIconBtn) leftIconBtn.style.transition = '';
-      setVolumeFromClientX(e.clientX);
-      localStorage.setItem(storageKeys.volume, String(audio.volume));
-    });
-
-    elasticSlider.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      setVolumeFromClientX(e.clientX);
-      localStorage.setItem(storageKeys.volume, String(audio.volume));
-    });
-
-    elasticSlider.addEventListener('pointerup', snapBack);
-    elasticSlider.addEventListener('pointercancel', snapBack);
-    elasticSlider.addEventListener('lostpointercapture', snapBack);
+    elasticSlider.addEventListener('pointerdown', handlePointerDown);
+    elasticSlider.addEventListener('pointermove', handlePointerMove);
+    elasticSlider.addEventListener('pointerup', handlePointerUp);
+    elasticSlider.addEventListener('pointercancel', handlePointerUp);
+    elasticSlider.addEventListener('lostpointercapture', handlePointerUp);
 
     elasticSlider.addEventListener('keydown', function (e) {
       var step = e.shiftKey ? 0.1 : 0.05;
@@ -657,20 +581,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   toggleVisualizerBtn.addEventListener('click', () => {
-    setVisualizerState(!visualizerEnabled);
+    var cur = localStorage.getItem(storageKeys.visualizer) !== 'off';
+    setVisualizerState(!cur);
   });
 
-  audio.addEventListener('timeupdate', () => {
+  audio.addEventListener('timeupdate', function () {
     if (!audio.duration || draggingProgress) {
       return;
     }
-    const percent = (audio.currentTime / audio.duration) * 100;
-    bar.style.width = `${percent}%`;
-    timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+    var percent = (audio.currentTime / audio.duration) * 100;
+    bar.style.width = percent + '%';
+    timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+
+    if (pendingTrackId && percent >= 80) {
+      var candidate = playlist.find(function (t) { return t.id === pendingTrackId; });
+      if (candidate) {
+        trackPlayCount(candidate);
+      }
+    }
   });
 
-  audio.addEventListener('ended', () => {
-    const index = getNextIndex(1);
+  audio.addEventListener('ended', function () {
+    if (pendingTrackId) {
+      var candidate = playlist.find(function (t) { return t.id === pendingTrackId; });
+      if (candidate) {
+        trackPlayCount(candidate);
+      }
+    }
+    pendingTrackId = null;
+    var index = getNextIndex(1);
     if (index >= 0) {
       loadSong(index);
     }
@@ -679,19 +618,37 @@ document.addEventListener('DOMContentLoaded', () => {
   audio.addEventListener('play', () => updatePlayState(true));
   audio.addEventListener('pause', () => updatePlayState(false));
 
-  window.addEventListener('resize', resizeCanvas);
-
   const initialVolume = Number(localStorage.getItem(storageKeys.volume) || 0.85);
   audio.volume = Math.max(0, Math.min(1, initialVolume));
   syncVolumeUI();
   updateModeUI();
-  setVisualizerState(visualizerEnabled);
-  resizeCanvas();
-  drawVisualizer();
+  setVisualizerState(localStorage.getItem(storageKeys.visualizer) !== 'off');
   applyFilters();
 
-  window.__playTrack = function (src, cover, name, artist, uploader) {
+  // ── Player Collapse Toggle ─────────────────────────
+  (function () {
+    var shell = document.querySelector('.player-shell');
+    var btn = document.getElementById('playerToggleBtn');
+    if (!shell || !btn) return;
+
+    var collapsed = localStorage.getItem(storageKeys.playerCollapsed) === '1';
+    if (collapsed) { shell.classList.add('collapsed'); document.body.classList.add('player-is-collapsed'); }
+
+    btn.addEventListener('click', function () {
+      collapsed = !collapsed;
+      shell.classList.toggle('collapsed', collapsed);
+      document.body.classList.toggle('player-is-collapsed', collapsed);
+      localStorage.setItem(storageKeys.playerCollapsed, collapsed ? '1' : '0');
+      setTimeout(function () {
+        if (window.__physicsScroll) window.__physicsScroll.recalc();
+      }, 420);
+    });
+  })();
+
+  window.__playTrack = function (src, cover, name, artist) {
     if (!src) return;
+    pendingTrackId = null;
+    lastTrackedMusicId = null;
     var idx = playlist.findIndex(function (t) { return t.src === src && t.name === name; });
     if (idx >= 0) {
       loadSong(idx);
@@ -700,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.src = src;
     if (playerCover) playerCover.src = cover;
     if (playerName) playerName.textContent = name;
-    if (playerArtist) playerArtist.textContent = (artist || '') + (uploader ? ' · ' + uploader : '');
+    if (playerArtist) playerArtist.textContent = artist || '';
     currentIndex = -1;
     lastTrackedMusicId = null;
     renderPlaylist();

@@ -51,13 +51,7 @@ async function getMyspaceData(user) {
     user,
     collectList,
     uploadList,
-    collectCount: collectList.length,
-    uploadCount: uploadList.length,
-    profileMetrics: {
-      favoriteArtists: new Set(collectList.map((item) => item.singer).filter(Boolean)).size,
-      totalUploadPlays: uploadList.reduce((sum, item) => sum + Number(item.play_count || 0), 0),
-      totalCollectedPlays: collectList.reduce((sum, item) => sum + Number(item.play_count || 0), 0)
-    }
+    collectCount: collectList.length
   };
 }
 

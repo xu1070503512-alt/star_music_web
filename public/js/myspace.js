@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
   const storageKey = 'star-music-history';
-  const audio = document.getElementById('audioPlayer');
   const tabs = Array.from(document.querySelectorAll('.tab'));
   const contents = Array.from(document.querySelectorAll('.tab-content'));
   const historyGrid = document.getElementById('historyGrid');
@@ -10,19 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const collectEmptyState = document.getElementById('collectEmptyState');
   const uploadGrid = document.getElementById('uploadGrid');
   const uploadEmptyState = document.getElementById('uploadEmptyState');
-
-  function playSource(source, name, artist) {
-    if (!audio || !source) {
-      return;
-    }
-    audio.src = source;
-    if (name && artist) {
-      audio.setAttribute('title', `${name} - ${artist}`);
-    }
-    audio.play().catch((err) => {
-      console.error('播放失败：', err);
-    });
-  }
 
   function updateEmptyState(grid, emptyState, selector) {
     if (!grid || !emptyState) {
@@ -92,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     historyGrid.innerHTML = history.map((item) => `
       <article class="history-card">
         <h3>${item.name}</h3>
-        <p>${item.artist} · ${item.uploader || '社区上传'}</p>
+        <p>${item.artist}</p>
         <span>${new Date(item.playedAt).toLocaleString('zh-CN')}</span>
         <div class="music-card-actions">
           <button class="btn btn-primary btn-compact history-play-btn" type="button" data-src="${item.src}" data-name="${item.name}" data-artist="${item.artist}">再次播放</button>
@@ -103,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     historyGrid.querySelectorAll('.history-play-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (window.__playTrack) {
-          window.__playTrack(btn.dataset.src, '', btn.dataset.name, btn.dataset.artist, '');
+          window.__playTrack(btn.dataset.src, '', btn.dataset.name, btn.dataset.artist);
         }
       });
     });
@@ -165,6 +151,72 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  // ── Profile Edit ──────────────────────────
+  const toggleEditBtn = document.getElementById('toggleEditBtn');
+  const profileEditPanel = document.getElementById('profileEditPanel');
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const editNickname = document.getElementById('editNickname');
+  const editSignature = document.getElementById('editSignature');
+  const displayNickname = document.getElementById('displayNickname');
+  const displaySignature = document.getElementById('displaySignature');
+
+  if (toggleEditBtn && profileEditPanel) {
+    toggleEditBtn.addEventListener('click', function () {
+      var isOpen = profileEditPanel.style.display !== 'none';
+      if (isOpen) {
+        profileEditPanel.style.display = 'none';
+        toggleEditBtn.classList.remove('active');
+      } else {
+        profileEditPanel.style.display = '';
+        toggleEditBtn.classList.add('active');
+        profileEditPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
+  if (cancelEditBtn && profileEditPanel && toggleEditBtn) {
+    cancelEditBtn.addEventListener('click', function () {
+      profileEditPanel.style.display = 'none';
+      toggleEditBtn.classList.remove('active');
+      if (editNickname) editNickname.value = displayNickname ? displayNickname.textContent : '';
+      if (editSignature) {
+        var sig = (displaySignature && displaySignature.textContent) || '';
+        if (sig === '还没有个性签名，点击编辑来写一句话吧。') sig = '';
+        editSignature.value = sig;
+      }
+    });
+  }
+
+  if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async function () {
+      var nickname = editNickname ? editNickname.value.trim() : '';
+      var signature = editSignature ? editSignature.value.trim() : '';
+
+      saveProfileBtn.disabled = true;
+      saveProfileBtn.textContent = '保存中...';
+
+      try {
+        var resp = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nickname, signature: signature })
+        });
+        var data = await resp.json();
+        if (data.ok) {
+          window.location.reload();
+        } else {
+          alert(data.message || '保存失败');
+        }
+      } catch (err) {
+        alert('网络错误，请重试');
+      } finally {
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.textContent = '保存';
+      }
+    });
+  }
 
   buildCollectFilters();
   renderHistory();

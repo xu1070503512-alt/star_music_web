@@ -11,6 +11,8 @@ const db = mysql.createPool({
   connectionLimit: 10
 });
 
+const pool = db.promise();
+
 function ensureUploadDirs() {
   const dirs = [
     'public/uploads/covers',
@@ -26,7 +28,15 @@ function ensureUploadDirs() {
   });
 }
 
-function runMigrations() {
+const MIGRATION_SUPPRESSED_ERRORS = [
+  'ER_DUP_FIELDNAME',
+  'ER_DUP_ENTRY',
+  'ER_NO_SUCH_TABLE',
+  'ER_BAD_FIELD_ERROR',
+  'ER_CANT_DROP_FIELD_OR_KEY'
+];
+
+async function runMigrations() {
   const migrations = [
     `CREATE TABLE IF NOT EXISTS users (
        id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,8 +45,6 @@ function runMigrations() {
        role VARCHAR(20) NOT NULL DEFAULT 'user',
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
      )`,
-    "ALTER TABLE users ADD COLUMN nickname VARCHAR(50) DEFAULT NULL",
-    "ALTER TABLE users ADD COLUMN signature VARCHAR(200) DEFAULT NULL",
     `CREATE TABLE IF NOT EXISTS music (
        id INT AUTO_INCREMENT PRIMARY KEY,
        song_name VARCHAR(200) NOT NULL,
@@ -79,20 +87,38 @@ function runMigrations() {
        UNIQUE KEY uk_gallery_item (page_name, item_type, sort_order)
      )`
   ];
-  migrations.forEach((sql) => {
-    db.query(sql, (err) => {
-      if (err && err.code !== 'ER_DUP_FIELDNAME' && err.code !== 'ER_DUP_ENTRY') {
+
+  for (const sql of migrations) {
+    try {
+      await pool.query(sql);
+    } catch (err) {
+      if (!MIGRATION_SUPPRESSED_ERRORS.includes(err.code)) {
         console.warn('迁移提示：', err.message);
       }
-    });
-  });
+    }
+  }
 
-  seedGallery();
-  seedPageContent();
-  seedWaveformDefaults();
+  const alterMigrations = [
+    "ALTER TABLE users ADD COLUMN nickname VARCHAR(50) DEFAULT NULL",
+    "ALTER TABLE users ADD COLUMN signature VARCHAR(200) DEFAULT NULL"
+  ];
+
+  for (const sql of alterMigrations) {
+    try {
+      await pool.query(sql);
+    } catch (err) {
+      if (!MIGRATION_SUPPRESSED_ERRORS.includes(err.code)) {
+        console.warn('迁移提示：', err.message);
+      }
+    }
+  }
+
+  await seedGallery();
+  await seedPageContent();
+  await seedWaveformDefaults();
 }
 
-function seedGallery() {
+async function seedGallery() {
   const artists = [
     ['Aurora Wave', 'https://picsum.photos/seed/artist1/400/520?grayscale'],
     ['Neon Drift', 'https://picsum.photos/seed/artist2/400/520?grayscale'],
@@ -114,18 +140,18 @@ function seedGallery() {
     ['Splice', 'linear-gradient(135deg, #7c5cff, #19d3ff)']
   ];
 
-  artists.forEach(function (a, i) {
-    db.query(
+  for (const [i, a] of artists.entries()) {
+    await pool.query(
       'INSERT IGNORE INTO gallery_items (page_name, item_type, sort_order, item_name, image_url) VALUES (?, ?, ?, ?, ?)',
       ['welcome', 'artist', i, a[0], a[1]]
     );
-  });
-  sponsors.forEach(function (s, i) {
-    db.query(
+  }
+  for (const [i, s] of sponsors.entries()) {
+    await pool.query(
       'INSERT IGNORE INTO gallery_items (page_name, item_type, sort_order, item_name, image_url) VALUES (?, ?, ?, ?, ?)',
       ['welcome', 'sponsor', i, s[0], s[1]]
     );
-  });
+  }
 }
 
 function seedPageContent() {
@@ -169,21 +195,21 @@ function seedPageContent() {
   };
 
   Object.entries(welcomeContent).forEach(([key, value]) => {
-    db.query(
+    pool.query(
       'INSERT IGNORE INTO page_content (page_name, content_key, content_value) VALUES (?, ?, ?)',
       ['welcome', key, value]
     );
   });
 
   Object.entries(homeContent).forEach(([key, value]) => {
-    db.query(
+    pool.query(
       'INSERT IGNORE INTO page_content (page_name, content_key, content_value) VALUES (?, ?, ?)',
       ['home', key, value]
     );
   });
 
   Object.entries(myspaceContent).forEach(([key, value]) => {
-    db.query(
+    pool.query(
       'INSERT IGNORE INTO page_content (page_name, content_key, content_value) VALUES (?, ?, ?)',
       ['myspace', key, value]
     );
@@ -249,21 +275,25 @@ function seedWaveformDefaults() {
     GradRatio: 0.75
   };
 
-  db.query(
+  pool.query(
     'INSERT IGNORE INTO waveform_defaults (id, settings) VALUES (1, ?)',
     [JSON.stringify(defaults)]
   );
 }
 
-db.getConnection((err, connection) => {
-  if (err) {
-    console.error('数据库连接失败：', err.message);
-    return;
+async function initDatabase() {
+  try {
+    const connection = await pool.getConnection();
+    console.log('数据库连接成功');
+    connection.release();
+    ensureUploadDirs();
+    await runMigrations();
+    console.log('数据库迁移完成');
+  } catch (err) {
+    console.error('数据库初始化失败：', err.message);
   }
-  console.log('数据库连接成功');
-  connection.release();
-  ensureUploadDirs();
-  runMigrations();
-});
+}
 
-module.exports = db.promise();
+initDatabase();
+
+module.exports = pool;

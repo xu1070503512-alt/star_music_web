@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterChipGroup = document.getElementById('filterChipGroup');
   const musicGrid = document.getElementById('musicGrid');
   const musicEmptyState = document.getElementById('musicEmptyState');
-  const toggleVisualizerBtn = document.getElementById('toggleVisualizerBtn');
   const volumeContainer = document.querySelector('.volume-container');
   const playButtons = Array.from(document.querySelectorAll('.play-btn'));
   const playFabButtons = Array.from(document.querySelectorAll('.play-fab'));
@@ -42,9 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const cards = Array.from(document.querySelectorAll('#musicGrid .music-card, #panel-home .music-card'));
   const pageState = window.__STAR_MUSIC_HOME__ || {};
 
-  if (!audio || !cards.length || !canvas || !musicGrid) {
+  if (!audio || !canvas) {
     return;
   }
+
+  const hasCards = cards.length > 0 && musicGrid;
 
   const modes = ['sequence', 'loop', 'random'];
   const modeLabels = {
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastTrackedMusicId = null;
   let pendingTrackId = null;
 
-  const playlist = cards.map((card, index) => ({
+  const playlist = hasCards ? cards.map((card, index) => ({
     index,
     id: card.dataset.musicId,
     cover: card.dataset.cover,
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     src: card.dataset.src,
     playCount: Number(card.dataset.playCount || 0),
     card
-  }));
+  })) : [];
 
   function updateModeUI() {
     if (modeLabel) {
@@ -117,15 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
     var eng = window.__waveformEngine;
     if (enabled) {
       document.body.classList.remove('is-visualizer-off');
-      if (eng) eng.start();
     } else {
       document.body.classList.add('is-visualizer-off');
-      if (eng) eng.stop();
     }
     localStorage.setItem(storageKeys.visualizer, enabled ? 'on' : 'off');
-    if (toggleVisualizerBtn) {
-      toggleVisualizerBtn.textContent = enabled ? '关闭可视化' : '开启可视化';
-    }
   }
 
   function renderPlaylist() {
@@ -199,13 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function ensureAudioContext() {
-    if (window.__waveformEngine && window.__waveformEngine.getCtx) {
-      var ctx = window.__waveformEngine.getCtx();
-      if (ctx && ctx.state === 'suspended') await ctx.resume();
-    }
-  }
-
   async function loadSong(index) {
     var track = playlist[index];
     if (!track) {
@@ -223,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPlaylist();
 
     try {
-      await ensureAudioContext();
       await audio.play();
       pendingTrackId = track.id;
       updatePlayState(true);
@@ -274,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyFilters() {
+    if (!hasCards) return;
     const keyword = (searchInput.value || '').trim().toLowerCase();
     const activeChip = filterChipGroup.querySelector('.filter-chip.active');
     const filter = activeChip ? activeChip.dataset.filter : 'all';
@@ -311,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPlaylist();
   }
 
+  if (hasCards) {
   allPlayTriggers.forEach((btn) => {
     btn.addEventListener('click', () => {
       const index = playlist.findIndex((item) => String(item.id) === String(btn.dataset.id));
@@ -346,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+  }
 
   playBtn.addEventListener('click', async () => {
     if (currentIndex === -1) {
@@ -363,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      await ensureAudioContext();
       await audio.play();
       updatePlayState(true);
     } catch (err) {
@@ -571,7 +561,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  if (hasCards && searchInput) {
   searchInput.addEventListener('input', applyFilters);
+  }
+  if (hasCards && filterChipGroup) {
   filterChipGroup.querySelectorAll('.filter-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       filterChipGroup.querySelectorAll('.filter-chip').forEach((item) => item.classList.remove('active'));
@@ -579,11 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applyFilters();
     });
   });
-
-  toggleVisualizerBtn.addEventListener('click', () => {
-    var cur = localStorage.getItem(storageKeys.visualizer) !== 'off';
-    setVisualizerState(!cur);
-  });
+  }
 
   audio.addEventListener('timeupdate', function () {
     if (!audio.duration || draggingProgress) {
@@ -623,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncVolumeUI();
   updateModeUI();
   setVisualizerState(localStorage.getItem(storageKeys.visualizer) !== 'off');
-  applyFilters();
+  if (hasCards) applyFilters();
 
   // ── Player Collapse Toggle ─────────────────────────
   (function () {
@@ -661,9 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentIndex = -1;
     lastTrackedMusicId = null;
     renderPlaylist();
-    ensureAudioContext().then(function () {
-      return audio.play();
-    }).then(function () {
+    audio.play().then(function () {
       updatePlayState(true);
     }).catch(function (err) {
       console.error('Play failed:', err);

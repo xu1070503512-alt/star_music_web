@@ -44,7 +44,12 @@
   var touchStartY = 0, touchLastY = 0, touchVelocities = [], touchActive = false;
 
   function onTouchStart(e) {
-    if (isVisualizerActive()) return;
+    if (isVisualizerActive()) {
+      var target = e.target;
+      if (target && target.closest && target.closest('.viz-settings-scroll, .viz-settings')) return;
+      e.preventDefault();
+      return;
+    }
     if (e.touches.length !== 1) return;
     touchStartY = e.touches[0].clientY;
     touchLastY = touchStartY;
@@ -53,7 +58,13 @@
   }
 
   function onTouchMove(e) {
-    if (isVisualizerActive()) return;
+    if (isVisualizerActive()) {
+      var target = e.target;
+      if (target && target.closest && target.closest('.viz-settings-scroll, .viz-settings')) return;
+      if (!touchActive || e.touches.length !== 1) return;
+      e.preventDefault();
+      return;
+    }
     if (!touchActive || e.touches.length !== 1) return;
     var y = e.touches[0].clientY;
     var dy = touchLastY - y;

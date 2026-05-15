@@ -64,6 +64,19 @@
     'cfgCutoffLow', 'cfgCutoffHigh', 'cfgFloor', 'cfgCeiling', 'cfgSlope', 'cfgRolloffQ',
     'cfgRolloffRate', 'cfgGradRatio', 'cfgRangeMid', 'cfgRangeCrest'
   ];
+
+  var numericRanges = {
+    cfgAudioSyncOffset: [-1000, 1000], cfgTargetVolume: [-60, 0], cfgMaxGain: [0, 45],
+    cfgBarWidth: [1, 256], cfgBarGap: [0, 256], cfgStepWidth: [1, 256], cfgStepGap: [0, 256],
+    cfgMinBarH: [0, 1080], cfgWidth: [32, 3840], cfgHeight: [32, 2160],
+    cfgDeadzone: [0, 100], cfgRadialArc: [0, 360], cfgRadialRot: [0, 360],
+    cfgChannelSpacing: [0, 2160], cfgSineExponent: [1, 16], cfgGravity: [0, 1],
+    cfgMeterBufferMs: [16, 1000], cfgFilterRadius: [0, 32],
+    cfgCutoffLow: [0, 24000], cfgCutoffHigh: [0, 24000],
+    cfgFloor: [-120, 0], cfgCeiling: [-120, 0], cfgSlope: [0, 10],
+    cfgRolloffQ: [0, 10], cfgRolloffRate: [0, 65],
+    cfgGradRatio: [0, 4], cfgRangeMid: [-120, 0], cfgRangeCrest: [-120, 0]
+  };
   var checkFields = [
     'cfgHideWhenSilent', 'cfgSilentProcess', 'cfgNormalizeVolume', 'cfgRoundedCaps', 'cfgLogScale',
     'cfgMirrorFreq', 'cfgRadialLayout', 'cfgRadialInvert', 'cfgAutoFftSize', 'cfgEnableLargeFft', 'cfgFastPeaks',
@@ -194,7 +207,10 @@
     numericFields.forEach(function (id) {
       var el = qs(id);
       if (!el) return;
-      result[fieldMap[id]] = Number(el.value);
+      var val = Number(el.value);
+      var range = numericRanges[id];
+      if (range) val = Math.min(range[1], Math.max(range[0], val));
+      result[fieldMap[id]] = val;
     });
     checkFields.forEach(function (id) {
       var el = qs(id);
@@ -514,15 +530,6 @@
     renderList();
   }
 
-  function bindResetButton() {
-    var btn = qs('vizResetDefaults');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      applySettingsToUI(loadedDefaults);
-      applyAll();
-    });
-  }
-
   function initBindings() {
     numericFields.forEach(bindNumericField);
     checkFields.forEach(function (id) {
@@ -545,9 +552,9 @@
       bindColorPair(pair[0], pair[1]);
     });
     bindAdminActions();
-    bindResetButton();
     bindSettingsToggle();
     bindInstanceControls();
+    bindRefreshButtons();
   }
 
   function bindSettingsToggle() {
@@ -576,6 +583,35 @@
       setCollapsed(isCollapsed);
       localStorage.setItem(STORAGE_KEY, isCollapsed ? 'true' : 'false');
     });
+  }
+
+  function bindRefreshButtons() {
+    var btn1 = qs('vizRefreshBtn');
+    var btn2 = qs('vizRefreshBtn2');
+
+    function handleRefresh(btn) {
+      if (!btn) return;
+      btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        btn.textContent = '刷新中...';
+
+        var eng = window.__waveformEngine;
+        if (eng) {
+          eng.diagnose();
+          await eng.refresh();
+        }
+
+        setTimeout(function () {
+          btn.disabled = false;
+          btn.textContent = btn.classList.contains('viz-refresh-btn--large')
+            ? '⟳ 刷新音波引擎'
+            : '⟳ 刷新音波';
+        }, 1200);
+      });
+    }
+
+    handleRefresh(btn1);
+    handleRefresh(btn2);
   }
 
   async function loadSettings() {

@@ -3,6 +3,15 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 520px);
   gap: 32px;
+  margin: 0 auto;
+}
+
+#panel-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 80px;
+  padding-bottom: 140px;
 }
 
 .upload-intro {

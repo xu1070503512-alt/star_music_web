@@ -126,7 +126,7 @@
   overlay = document.createElement('div');
   overlay.id = 'adminConsoleOverlay';
   overlay.innerHTML = '<div class="admin-console-window">' +
-    '<div class="admin-console-header"><span class="console-icon">⚙</span><span class="console-title">控制台</span><button class="console-close">✕</button></div>' +
+    '<div class="admin-console-header"><span class="console-icon">⚙</span><span class="console-title">控制台</span><button class="console-minimize" title="收起">−</button><button class="console-close" title="关闭">✕</button></div>' +
     '<div class="admin-console-body"></div>' +
     '<div class="console-save-bar"><button class="console-save-btn">保存更改</button><span class="console-status"></span></div>' +
     '</div>';
@@ -139,7 +139,7 @@
   // ── Drag ──
   var header = overlay.querySelector('.admin-console-header');
   header.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('.console-close')) return;
+    if (e.target.closest('.console-close') || e.target.closest('.console-minimize')) return;
     isDragging = true;
     dragStartX = e.clientX; dragStartY = e.clientY;
     winStartX = overlay.offsetLeft; winStartY = overlay.offsetTop;
@@ -155,6 +155,17 @@
 
   overlay.querySelector('.console-close').addEventListener('click', function () {
     overlay.style.display = 'none';
+  });
+
+  var minimizeBtn = overlay.querySelector('.console-minimize');
+  var consoleWindow = overlay.querySelector('.admin-console-window');
+  var isMinimized = false;
+
+  minimizeBtn.addEventListener('click', function () {
+    isMinimized = !isMinimized;
+    consoleWindow.classList.toggle('is-minimized', isMinimized);
+    minimizeBtn.textContent = isMinimized ? '+' : '−';
+    minimizeBtn.title = isMinimized ? '展开' : '收起';
   });
 
   // ── Gallery helpers ──

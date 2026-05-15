@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -69,6 +69,8 @@
     </nav>
   </div>
 
+  <nav class="section-nav-dots" id="sectionNavDots" aria-label="Section navigation"></nav>
+
   <!-- ============== PANEL STAGE ============== -->
   <div class="panel-stage">
     <div class="panel-track">
@@ -88,7 +90,6 @@
             <article><strong><%= communityStats.collectedCount %></strong><span>我的收藏</span></article>
           </div>
           <div class="hero-actions">
-            <button class="btn btn-primary btn-glow" id="toggleVisualizerBtn" type="button">切换可视化</button>
           </div>
         </div>
         <aside class="hero-feature-card">
@@ -112,7 +113,7 @@
             <button class="filter-chip" type="button" data-filter="popular" data-edit-key="filterPopular"><%= (pageContent.home && pageContent.home.filterPopular) || '热门优先' %></button>
           </div>
         </div>
-        <div class="toolbar-meta"><span id="resultCountText">共 <%= musicList.length %> 首曲目</span><span class="toolbar-hint">支持顺序 / 循环 / 随机播放、音量记忆与可视化开关</span></div>
+        <div class="toolbar-meta"><span id="resultCountText">共 <%= musicList.length %> 首曲目</span></div>
       </section>
       <section class="music-grid-section">
         <div class="section-heading-row">
@@ -124,7 +125,7 @@
               <div class="music-card-cover-wrap">
                 <img src="<%= item.cover_path %>" class="music-card-cover" alt="<%= item.song_name %> 封面">
                 <div class="music-card-glow"></div>
-                <div class="music-card-overlay"><button class="play-fab" type="button" aria-label="播放 <%= item.song_name %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">></button></div>
+                <div class="music-card-overlay"><button class="play-fab" type="button" aria-label="播放 <%= item.song_name %>" data-cover="<%= item.cover_path %>" data-name="<%= item.song_name %>" data-artist="<%= item.singer %>" data-src="<%= item.mp3_path %>" data-id="<%= item.id %>">▶</button></div>
               </div>
               <div class="music-card-body">
                 <div class="music-card-topline"><span class="pill"><%= item.uploader_role === 'admin' ? '官方推荐' : '社区共创' %></span><span class="meta-light"><span class="play-count-text"><%= item.play_count || 0 %></span> 次播放</span></div>
@@ -144,14 +145,15 @@
   </div>
 
     <!-- ============== PANEL: VISUALIZER ============== -->
-  <div class="app-panel app-panel-viz" id="panel-visualizer">
-    <div class="viz-layout">
+  <div class="app-panel" id="panel-visualizer">
+    <main class="viz-layout">
       <div class="viz-stage-card">
         <div class="viz-stage" id="vizStage">
           <canvas id="visualizerCanvas" class="visualizer-canvas" aria-hidden="true"></canvas>
         </div>
         <div class="viz-stage-placeholder" id="vizPlaceholder">
           <span>播放音频后音波显示在此</span>
+          <button class="viz-refresh-btn" id="vizRefreshBtn" type="button" title="刷新音波状态">⟳ 刷新音波</button>
         </div>
       </div>
 
@@ -166,7 +168,7 @@
         <div class="viz-settings-header">
           <h2 class="section-title heading-no-margin">音波设置</h2>
           <% if (user.role === 'admin') { %>
-          <span class="viz-admin-badge">管理员模式</span>
+          <span class="viz-admin-badge" id="vizAdminBadge">管理员模式</span>
           <% } %>
         </div>
         <div class="viz-settings-scroll">
@@ -298,6 +300,10 @@
               <div class="viz-check-item" id="grpRadialInv" style="display:none">
                 <input type="checkbox" id="cfgRadialInvert">
                 <label for="cfgRadialInvert">反转放射方向</label>
+              </div>
+              <div class="viz-check-item">
+                <input type="checkbox" id="cfgMouseFollow">
+                <label for="cfgMouseFollow">启用鼠标跟随</label>
               </div>
             </div>
             <div id="sectRadial" style="display:none;margin-top:10px">
@@ -451,7 +457,7 @@
               </div>
               <div class="viz-check-item" id="grpFftSize">
                 <input type="checkbox" id="cfgEnableLargeFft">
-                <label for="cfgEnableLargeFft">启用大FFT (65536)</label>
+                <label for="cfgEnableLargeFft">启用大FFT (32768)</label>
               </div>
               <div class="viz-control" id="grpMeterBufferMs" style="display:none">
                 <label for="cfgMeterBufferMs">液压缓冲 <span class="viz-unit">ms</span></label>
@@ -623,23 +629,20 @@
                 <button class="viz-mini-btn" id="vizFlipV" type="button">垂直翻转</button>
                 <button class="viz-mini-btn" id="vizCenter" type="button">居中复位</button>
               </div>
-              <div class="viz-check-item" style="margin-top:10px">
-                <input type="checkbox" id="cfgMouseFollow">
-                <label for="cfgMouseFollow">启用鼠标跟随</label>
-              </div>
             </div>
           </div>
 
         </div><!-- .viz-settings-scroll -->
 
         <div class="viz-settings-footer">
+          <button class="viz-refresh-btn viz-refresh-btn--large" id="vizRefreshBtn2" type="button" title="刷新音波状态">⟳ 刷新音波引擎</button>
           <% if (user.role === 'admin') { %>
           <button class="viz-preset-btn" id="vizSaveDefaults" type="button">保存为默认</button>
           <% } %>
         </div>
         </div><!-- .viz-settings-body -->
       </div><!-- .viz-settings -->
-    </div><!-- .viz-layout -->
+    </main><!-- .viz-layout -->
   </div><!-- #panel-visualizer -->
 
 <!-- ============== PANEL: MYSPACE ============== -->
@@ -654,7 +657,7 @@
             <p class="profile-account">账号：<%= user.username %></p>
             <p class="profile-description" id="displaySignature"><%= user.signature || '还没有个性签名，点击编辑来写一句话吧。' %></p>
           </div>
-          <button class="profile-edit-btn" id="toggleEditBtn" type="button" title="编辑个人资料">编辑</button>
+          <button class="profile-edit-btn" id="toggleEditBtn" type="button" title="编辑个人资料"></button>
         </div>
       </section>
 

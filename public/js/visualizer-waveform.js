@@ -659,8 +659,13 @@
     clearCanvas();
     if (!scene) return;
 
+    if (cfg.HideWhenSilent && scene.rms < 1e-6) return;
+
     var instances = cfg.waveInstances;
-    if (!instances || !instances.length) return;
+    if (!instances || !instances.length) {
+      cfg.waveInstances = [{ id: 1, name: '主音波', enabled: true, x: 0, y: 0, scaleX: 100, scaleY: 100, flipH: false, flipV: false }];
+      instances = cfg.waveInstances;
+    }
 
     for (var instIdx = 0; instIdx < instances.length; instIdx++) {
       var inst = instances[instIdx];
@@ -842,12 +847,17 @@
     };
   }
 
+  function tryResumeCtx() {
+    if (!audioCtx || audioCtx.state !== 'suspended') return;
+    audioCtx.resume().catch(function () {});
+  }
+
   function tick(now) {
     if (!running) return;
     animId = requestAnimationFrame(tick);
     if (!audioCtx || !analyserLeft) return;
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      tryResumeCtx();
       return;
     }
     var dt = lastTick ? Math.min(0.12, (now - lastTick) / 1000) : 0.016;
@@ -862,20 +872,21 @@
     drawScene(scene);
   }
 
-  async function start() {
+  function start() {
     try {
+      resizeCanvas();
       createAudioGraph();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-      if (!running) {
-        running = true;
-        lastTick = 0;
-        animId = requestAnimationFrame(tick);
-      }
+      tryResumeCtx();
     } catch (err) {
       console.error('初始化音波引擎失败：', err);
     }
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+    running = true;
+    lastTick = 0;
+    animId = requestAnimationFrame(tick);
   }
 
   function stop() {
@@ -884,7 +895,6 @@
       cancelAnimationFrame(animId);
       animId = null;
     }
-    clearCanvas();
   }
 
   function applySettings(settings) {
@@ -949,9 +959,62 @@
     });
   }
 
+  async function refresh() {
+    stop();
+    historyFrames = [];
+    smoothed = { left: null, right: null, meterLeft: null, meterRight: null, waveLeft: null, waveRight: null };
+    resizeCanvas();
+
+    if (!audioCtx) {
+      createAudioGraph();
+    }
+
+    if (audioCtx && audioCtx.state === 'suspended') {
+      try {
+        await audioCtx.resume();
+      } catch (e) {
+        console.warn('[Visualizer] AudioContext resume failed:', e.message);
+      }
+    }
+
+    if (!audio.paused) {
+      await start();
+    }
+  }
+
+  function diagnose() {
+    var info = {
+      audioElement: !!audio,
+      audioPaused: audio ? audio.paused : null,
+      audioSrc: audio ? (audio.src || '(empty)') : 'null',
+      canvasExists: !!canvas,
+      canvasSize: canvas ? (canvas.width + 'x' + canvas.height) : 'null',
+      canvasStyleSize: canvas ? (canvas.style.width + ' x ' + canvas.style.height) : 'null',
+      stageExists: !!stage,
+      stageSize: stage ? (stage.clientWidth + 'x' + stage.clientHeight) : 'null',
+      audioCtxExists: !!audioCtx,
+      audioCtxState: audioCtx ? audioCtx.state : 'null',
+      analyserLeft: !!analyserLeft,
+      analyserRight: !!analyserRight,
+      analyserLeftFftSize: analyserLeft ? analyserLeft.fftSize : 0,
+      running: running,
+      historyFrames: historyFrames.length,
+      cfgDisplayMode: cfg.DisplayMode,
+      cfgRenderMode: cfg.RenderMode,
+      cfgChannelMode: cfg.ChannelMode,
+      cfgColorBase: cfg.ColorBase,
+      cfgWidth: cfg.cw,
+      cfgHeight: cfg.ch
+    };
+    console.log('[Visualizer] DIAGNOSTICS:', JSON.stringify(info, null, 2));
+    return info;
+  }
+
   window.__waveformEngine = {
     start: start,
     stop: stop,
+    refresh: refresh,
+    diagnose: diagnose,
     applySettings: applySettings,
     getConfig: function () { return cfg; },
     resize: resizeCanvas,
@@ -959,7 +1022,10 @@
   };
 
   audio.addEventListener('play', start);
-  audio.addEventListener('pause', function () {});
+  audio.addEventListener('playing', start);
+  audio.addEventListener('pause', function () {
+    stop();
+  });
 
   window.addEventListener('pageswitch', function (event) {
     if (!event.detail || !event.detail.page) return;
@@ -967,4 +1033,18 @@
       start();
     }
   });
+
+  audio.addEventListener('emptied', function () {
+    stop();
+    historyFrames = [];
+    smoothed = { left: null, right: null, meterLeft: null, meterRight: null };
+  });
+
+  audio.addEventListener('error', function () {
+    stop();
+  });
+
+  if (!audio.paused) {
+    start();
+  }
 })();

@@ -97,9 +97,33 @@
   document.body.appendChild(leftArrow);
   document.body.appendChild(rightArrow);
 
+  // ── Section Nav Dots ──
+  var dotsNav = document.getElementById('sectionNavDots');
+  if (dotsNav) {
+    pageOrder.forEach(function (page, i) {
+      var dot = document.createElement('button');
+      dot.className = 'section-nav-dot' + (page === currentPage ? ' active' : '');
+      dot.setAttribute('aria-label', 'Go to section ' + (i + 1));
+      dot.addEventListener('click', function () {
+        switchToPage(page, true);
+      });
+      dotsNav.appendChild(dot);
+    });
+  }
+
+  function updateDots() {
+    if (!dotsNav) return;
+    var dots = dotsNav.querySelectorAll('.section-nav-dot');
+    var idx = pageIndex(currentPage);
+    dots.forEach(function (d, i) {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
   function updateArrows() {
     leftArrow.classList.toggle('disabled', false);
     rightArrow.classList.toggle('disabled', false);
+    updateDots();
   }
 
   // ── Init ──
@@ -114,6 +138,10 @@
     setTimeout(function () {
       if (window.__physicsScroll) window.__physicsScroll.reset();
     }, 150);
+  }
+
+  if (currentPage === 'visualizer' && window.__waveformEngine) {
+    setTimeout(function () { window.__waveformEngine.resize(); }, 200);
   }
 
   // ── Link interception ──────────────────────────

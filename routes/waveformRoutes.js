@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿const express = require('express');
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿const express = require('express');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
@@ -88,7 +88,13 @@ router.get('/waveform/settings', requireLogin, async (req, res) => {
 
 router.put('/waveform/settings', requireLogin, requireAdmin, async (req, res) => {
   try {
-    const settings = { ...getDefaults(), ...(req.body || {}), SettingsVersion: DEFAULT_SETTINGS.SettingsVersion };
+    var allowedKeys = Object.keys(DEFAULT_SETTINGS);
+    var clean = {};
+    for (var i = 0; i < allowedKeys.length; i++) {
+      var k = allowedKeys[i];
+      if (req.body && req.body[k] != null) clean[k] = req.body[k];
+    }
+    var settings = { ...getDefaults(), ...clean, SettingsVersion: DEFAULT_SETTINGS.SettingsVersion };
     await db.query(
       'INSERT INTO waveform_defaults (id, settings) VALUES (1, ?) ON DUPLICATE KEY UPDATE settings = ?',
       [JSON.stringify(settings), JSON.stringify(settings)]

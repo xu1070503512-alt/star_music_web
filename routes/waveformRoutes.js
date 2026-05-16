@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿const express = require('express');
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿const express = require('express');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
@@ -88,7 +88,7 @@ router.get('/waveform/settings', requireLogin, async (req, res) => {
 
 router.put('/waveform/settings', requireLogin, requireAdmin, async (req, res) => {
   try {
-    var allowedKeys = Object.keys(DEFAULT_SETTINGS);
+    var allowedKeys = Object.keys(DEFAULT_SETTINGS).concat(['mouseFollow', 'waveInstances']);
     var clean = {};
     for (var i = 0; i < allowedKeys.length; i++) {
       var k = allowedKeys[i];

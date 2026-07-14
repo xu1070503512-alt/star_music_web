@@ -1,8 +1,20 @@
 const jwt = require('jsonwebtoken');
 
 function requireLogin(req, res, next) {
-  const token = req.cookies.token;
+  // 支持小程序通过 Authorization header 传递 token
+  var token = req.cookies.token;
+  if (!token && req.headers.authorization) {
+    var parts = req.headers.authorization.split(' ');
+    if (parts.length === 2 && parts[0] === 'Bearer') {
+      token = parts[1];
+    }
+  }
+
   if (!token) {
+    // 如果是 API 请求返回 JSON，否则重定向
+    if (req.path.startsWith('/api/miniapp/')) {
+      return res.status(401).json({ status: 'error', msg: '未登录' });
+    }
     return res.redirect('/?auth=login');
   }
 
@@ -11,6 +23,9 @@ function requireLogin(req, res, next) {
     req.user = user;
     next();
   } catch (err) {
+    if (req.path.startsWith('/api/miniapp/')) {
+      return res.status(401).json({ status: 'error', msg: '登录已过期' });
+    }
     res.clearCookie('token');
     res.redirect('/?auth=login');
   }

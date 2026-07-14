@@ -54,4 +54,79 @@ router.put('/user/profile', requireLogin, async (req, res) => {
   }
 });
 
+// ===== 小程序专用 API =====
+
+// 小程序登录（返回 JSON）
+router.post('/miniapp/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const token = await authService.login({ username, password });
+    const jwt = require('jsonwebtoken');
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({
+      status: 'success',
+      token: token,
+      user: {
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname || '',
+        role: user.role || 'user',
+        signature: user.signature || ''
+      }
+    });
+  } catch (err) {
+    const message = err instanceof authService.AppError ? err.message : '登录失败';
+    res.status(401).json({ status: 'error', msg: message });
+  }
+});
+
+// 小程序注册（返回 JSON）
+router.post('/miniapp/register', async (req, res) => {
+  try {
+    const { username, password, repassword } = req.body;
+    await authService.register({ username, password, repassword });
+    // 注册成功后自动登录
+    const token = await authService.login({ username, password });
+    const jwt = require('jsonwebtoken');
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({
+      status: 'success',
+      token: token,
+      user: {
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname || '',
+        role: user.role || 'user',
+        signature: user.signature || ''
+      }
+    });
+  } catch (err) {
+    const message = err instanceof authService.AppError ? err.message : '注册失败';
+    res.status(400).json({ status: 'error', msg: message });
+  }
+});
+
+// 小程序更新资料（返回 JSON）
+router.put('/miniapp/profile', requireLogin, async (req, res) => {
+  try {
+    const { nickname, signature } = req.body;
+    const token = await authService.updateProfile(req.user.id, nickname, signature);
+    const jwt = require('jsonwebtoken');
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({
+      status: 'success',
+      user: {
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname || '',
+        role: user.role || 'user',
+        signature: user.signature || ''
+      }
+    });
+  } catch (err) {
+    console.error('更新资料失败：', err);
+    res.status(500).json({ status: 'error', msg: '更新失败' });
+  }
+});
+
 module.exports = router;

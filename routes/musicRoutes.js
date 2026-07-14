@@ -58,6 +58,53 @@ router.post('/track_play', requireLogin, async (req, res) => {
   }
 });
 
+// 获取音乐列表（小程序用）
+router.get('/music', async (req, res) => {
+  try {
+    const musicList = await musicService.getHomePageData({ id: 0 });
+    res.json({ status: 'success', data: musicList.musicList });
+  } catch (err) {
+    console.error('获取音乐列表失败：', err);
+    res.status(500).json({ status: 'error', msg: '获取失败' });
+  }
+});
+
+// 获取收藏列表（小程序用）
+router.get('/miniapp/collect', requireLogin, async (req, res) => {
+  try {
+    const collectRepository = require('../repositories/collectRepository');
+    const collectList = await collectRepository.getCollectedMusicByUser(req.user.id);
+    res.json({ status: 'success', data: collectList });
+  } catch (err) {
+    console.error('获取收藏列表失败：', err);
+    res.status(500).json({ status: 'error', msg: '获取失败' });
+  }
+});
+
+// 获取欢迎页数据（小程序用：page_content + gallery_items）
+router.get('/miniapp/welcome', async (req, res) => {
+  try {
+    const db = require('../db');
+    var pageContent = {};
+    var galleryData = { artist: [], sponsor: [] };
+    try {
+      const [rows] = await db.query('SELECT content_key, content_value FROM page_content WHERE page_name = ?', ['welcome']);
+      rows.forEach(function (r) { pageContent[r.content_key] = r.content_value; });
+    } catch (e) { console.warn('page_content query failed:', e.message); }
+    try {
+      const [gRows] = await db.query('SELECT item_type, sort_order, item_name, image_url FROM gallery_items WHERE page_name = ? ORDER BY item_type, sort_order', ['welcome']);
+      gRows.forEach(function (r) {
+        if (!galleryData[r.item_type]) galleryData[r.item_type] = [];
+        galleryData[r.item_type].push({ name: r.item_name, image: r.image_url });
+      });
+    } catch (e) { console.warn('gallery_items query failed:', e.message); }
+    res.json({ status: 'success', pageContent: pageContent, galleryData: galleryData });
+  } catch (err) {
+    console.error('获取欢迎页数据失败：', err);
+    res.status(500).json({ status: 'error', msg: '获取失败' });
+  }
+});
+
 router.post('/delete_music', requireLogin, requireAdmin, async (req, res) => {
   try {
     const musicId = getMusicIdFromRequest(req);
